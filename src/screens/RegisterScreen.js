@@ -65,6 +65,11 @@ const RegisterScreen = ({ navigation }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
+
+      <View style={styles.oval1} />
+      <View style={styles.oval2} />
+      <View style={styles.oval3} />
+
       <ScrollView 
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
@@ -144,9 +149,8 @@ const RegisterScreen = ({ navigation }) => {
             placeholder="Gabriel García Márquez, etc."
             containerStyle={styles.inputContainer}
           />
-        </View>
 
-        <View style={styles.buttonGroup}>
+          <View style={styles.buttonGroup}>
           <Button 
             title={loading ? "Registrando..." : "Registrarse"} 
             onPress={handleRegister}
@@ -157,9 +161,12 @@ const RegisterScreen = ({ navigation }) => {
           <Button 
             title="Regresar" 
             onPress={() => navigation.goBack()}
-            style={[styles.button, { backgroundColor: colors.gray }]}
+            style={[styles.button, { backgroundColor: colors.red }]}
           />
         </View>
+        </View>
+
+        
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -169,6 +176,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+    position: 'relative', // ✅ importante
+    overflow: 'hidden',
+  },
+  oval1: {
+  position: 'absolute',
+  width: 180,
+  height: 180,
+  borderRadius: 90,
+  backgroundColor: '#78C9DC', 
+  top: -40,
+  left: -40,
+  zIndex: 0,
+  },
+  oval2: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: '#DA96BB',
+    bottom: -30,
+    left: -50,
+    zIndex: 0,
+  },
+  oval3: {
+    position: 'absolute',
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: '#4449D8',
+    bottom: -20,
+    right: -30,
+    zIndex: 0,
   },
   scrollContainer: {
     padding: 20,

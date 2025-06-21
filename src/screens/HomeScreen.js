@@ -6,11 +6,14 @@ import { theme, colors } from '../config/colors';
 const HomeScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
+      <View style={styles.oval1} />
+      <View style={styles.oval2} />
+      <View style={styles.oval3} />
       <View style={styles.contentBox}>
         <Text style={styles.title}>Take a Break</Text>
         <Text style={styles.subtitle}>Tu momento para respirar y avanzar.</Text>
         <Image 
-          source={require('../assets/images/logo.png')} 
+          source={require('../assets/images/logo2.png')} 
           style={[theme.logo, styles.logo]} 
         />
         <View style={styles.buttonContainer}>
@@ -37,6 +40,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    position: 'relative', // ✅ importante
+    overflow: 'hidden',
+  },
+  oval1: {
+  position: 'absolute',
+  width: 180,
+  height: 180,
+  borderRadius: 90,
+  backgroundColor: '#78C9DC', 
+  top: -40,
+  left: -40,
+  zIndex: 0,
+  },
+  oval2: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: '#DA96BB', 
+    bottom: -30,
+    left: -50,
+    zIndex: 0,
+  },
+  oval3: {
+    position: 'absolute',
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: '#4449D8', 
+    bottom: -20,
+    right: -30,
+    zIndex: 0,
   },
   contentBox: {
     width: '90%',
@@ -53,6 +88,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
     alignItems: 'center',
+    zIndex: 1,
   },
   title: {
     fontSize: 32,

@@ -11,7 +11,23 @@ const Stack = createStackNavigator();
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
+      <Stack.Navigator initialRouteName="Home"
+        screenOptions={{
+         cardStyle: { backgroundColor: '#c38aea' },
+          cardStyleInterpolator: ({ current }) => ({
+            cardStyle: {
+              opacity: current.progress,
+            },
+          }),
+          headerStyle: {
+            backgroundColor: '#c38aea', // Color del header
+          },
+          headerTintColor: '#fff', // Color del texto del header
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+        }}
+      >
         <Stack.Screen 
           name="Home" 
           component={HomeScreen} 
