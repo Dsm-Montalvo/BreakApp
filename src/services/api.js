@@ -1,27 +1,27 @@
-import axios from 'axios';
+import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
+import { setContext } from '@apollo/client/link/context'; 
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'http://192.168.50.232:3000/api';
+const httpLink = createHttpLink({
+       uri: Platform.OS === 'ios' ? 'http://localhost:3001/takeabrakemovil/graphql' : 'http://10.0.2.2:3001/takeabrakemovil/graphql',
+    //  uri:'https://aqui va el link de produccion.com/'
+});
 
-export const registerUser = async (userData) => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/register`, {
-      ...userData,
-      plataforma: ['android']
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response ? error.response.data : error.message;
-  }
-};
+const authLink = setContext(async (_, { headers }) => {
+    // Leer el token
+    const token = await AsyncStorage.getItem('token');
+    return {
+        headers: {
+            ...headers,
+            authorization: token ? `Bearer ${token}` : '',
+        },
+    };
+});
 
-export const loginUser = async (email, password) => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/login`, {
-      email,
-      password
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response ? error.response.data : error.message;
-  }
-};
+const client = new ApolloClient({
+    cache: new InMemoryCache(),
+    link: authLink.concat(httpLink),
+});
+
+export default client;
