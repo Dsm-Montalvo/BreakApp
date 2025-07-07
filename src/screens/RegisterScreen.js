@@ -1,12 +1,21 @@
 import React, { useState } from 'react';
-import { View, Image, Text, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Image, Text, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
-import { registerUser } from '../services/api';
 import { theme, colors } from '../config/colors';
+import { gql, useMutation } from '@apollo/client';
+
+const NUEVA_CUENTA = gql`
+  mutation crearUsuarios($input: UsuariosInput) {
+    crearUsuarios(input: $input)
+  }
+`;
+
+const GENEROS = ['Ficción', 'Misterio', 'Romance'];
+const AUTORES = ['Gabriel García Márquez', 'Isabel Allende', 'J.K. Rowling'];
+const PLATAFORMAS = ['Web', 'Android', 'iOS'];
 
 const RegisterScreen = ({ navigation }) => {
-  // Estado completo del formulario
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -17,48 +26,78 @@ const RegisterScreen = ({ navigation }) => {
     preferences: {
       generos: [],
       autores: []
-    }
+    },
+    plataforma: [],
   });
 
+  const [crearUsuarios] = useMutation(NUEVA_CUENTA);
   const [loading, setLoading] = useState(false);
 
-  // Función para manejar cambios en los campos
   const handleChange = (field, value) => {
-    if (field.includes('.')) {
-      const [parent, child] = field.split('.');
-      setFormData({
-        ...formData,
-        [parent]: {
-          ...formData[parent],
-          [child]: value.split(',').map(item => item.trim())
-        }
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [field]: value
-      });
-    }
+    setFormData({ ...formData, [field]: value });
   };
 
-  // Función para manejar el registro
+  const toggleSelection = (category, value) => {
+    setFormData(prev => {
+      const items = category === 'plataforma' ? prev.plataforma : prev.preferences[category];
+      const updated = items.includes(value)
+        ? items.filter(item => item !== value)
+        : [...items, value];
+
+      return category === 'plataforma'
+        ? { ...prev, plataforma: updated }
+        : {
+            ...prev,
+            preferences: { ...prev.preferences, [category]: updated }
+          };
+    });
+  };
+
   const handleRegister = async () => {
-    if (!formData.email || !formData.password || !formData.nombre || !formData.apellido) {
+    const { nombre, apellido, email, password, edad, sexo } = formData;
+
+    if (!nombre || !apellido || !email || !password || !edad || !sexo) {
       Alert.alert('Error', 'Por favor completa todos los campos obligatorios');
       return;
     }
 
     setLoading(true);
     try {
-      await registerUser(formData);
+      await crearUsuarios({
+        variables: {
+          input: {
+            ...formData,
+            edad: parseInt(formData.edad),
+          }
+        }
+      });
+
       Alert.alert('Éxito', 'Registro exitoso. Por favor inicia sesión.');
       navigation.navigate('Login');
     } catch (error) {
+      console.error(error);
       Alert.alert('Error', error.message || 'Ocurrió un error al registrar');
     } finally {
       setLoading(false);
     }
   };
+
+  const renderSelection = (items, category) => (
+    <View style={styles.selectContainer}>
+      {items.map(item => (
+        <TouchableOpacity
+          key={item}
+          onPress={() => toggleSelection(category, item)}
+          style={[
+            styles.selectItem,
+            (category === 'plataforma' ? formData.plataforma : formData.preferences[category]).includes(item) && styles.selected
+          ]}
+        >
+          <Text style={styles.selectText}>{item}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
 
   return (
     <KeyboardAvoidingView
@@ -66,107 +105,41 @@ const RegisterScreen = ({ navigation }) => {
       style={styles.container}
     >
 
-      <View style={styles.oval1} />
-      <View style={styles.oval2} />
-      <View style={styles.oval3} />
-
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-      >
-        
+    <View style={styles.oval1} />
+    <View style={styles.oval2} />
+    <View style={styles.oval3} />
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         <Text style={styles.header}>Registro</Text>
-        
-        <Image 
-            source={require('../assets/images/logo2.png')} 
-            style={[theme.logo, styles.logo]} 
-        />
-        
+        <Image source={require('../assets/images/logo2.png')} style={[theme.logo, styles.logo]} />
+
         <View style={styles.formContainer}>
-          <Input
-            label="Nombre*"
-            value={formData.nombre}
-            onChangeText={(text) => handleChange('nombre', text)}
-            placeholder="Ingresa tu nombre"
-            containerStyle={styles.inputContainer}
-          />
-          
-          <Input
-            label="Apellido*"
-            value={formData.apellido}
-            onChangeText={(text) => handleChange('apellido', text)}
-            placeholder="Ingresa tu apellido"
-            containerStyle={styles.inputContainer}
-          />
-          
-          <Input
-            label="Edad"
-            value={formData.edad}
-            onChangeText={(text) => handleChange('edad', text)}
-            placeholder="Ingresa tu edad"
-            keyboardType="numeric"
-            containerStyle={styles.inputContainer}
-          />
-          
-          <Input
-            label="Sexo"
-            value={formData.sexo}
-            onChangeText={(text) => handleChange('sexo', text)}
-            placeholder="masculino/femenino/otro"
-            containerStyle={styles.inputContainer}
-          />
-          
-          <Input
-            label="Correo electrónico*"
-            value={formData.email}
-            onChangeText={(text) => handleChange('email', text)}
-            placeholder="Ingresa tu correo"
-            keyboardType="email-address"
-            containerStyle={styles.inputContainer}
-          />
-          
-          <Input
-            label="Contraseña*"
-            value={formData.password}
-            onChangeText={(text) => handleChange('password', text)}
-            placeholder="Ingresa tu contraseña"
-            secureTextEntry
-            containerStyle={styles.inputContainer}
-          />
-          
-          <Input
-            label="Géneros preferidos (separados por comas)"
-            value={formData.preferences.generos.join(', ')}
-            onChangeText={(text) => handleChange('preferences.generos', text)}
-            placeholder="ficcion, misterio, etc."
-            containerStyle={styles.inputContainer}
-          />
-          
-          <Input
-            label="Autores preferidos (separados por comas)"
-            value={formData.preferences.autores.join(', ')}
-            onChangeText={(text) => handleChange('preferences.autores', text)}
-            placeholder="Gabriel García Márquez, etc."
-            containerStyle={styles.inputContainer}
-          />
+          <Input label="Nombre*" value={formData.nombre}
+          onChangeText={text => handleChange('nombre', text)} placeholder="Ingresa tu nombre" containerStyle={styles.inputContainer} />
+          <Input label="Apellido*" value={formData.apellido} 
+          onChangeText={text => handleChange('apellido', text)} placeholder="Ingresa tu apellido" containerStyle={styles.inputContainer} />
+          <Input label="Edad*" value={formData.edad} 
+          onChangeText={text => handleChange('edad', text)} placeholder="Ingresa tu edad" keyboardType="numeric" containerStyle={styles.inputContainer} />
+          <Input label="Sexo*" value={formData.sexo} 
+          onChangeText={text => handleChange('sexo', text)} placeholder="masculino/femenino/otro" containerStyle={styles.inputContainer} />
+          <Input label="Correo electrónico*" value={formData.email} 
+          onChangeText={text => handleChange('email', text)} placeholder="Ingresa tu correo" keyboardType="email-address" containerStyle={styles.inputContainer} />
+          <Input label="Contraseña*" value={formData.password} 
+          onChangeText={text => handleChange('password', text)} placeholder="Ingresa tu contraseña" secureTextEntry containerStyle={styles.inputContainer} />
+
+          <Text style={styles.subTitle}>Selecciona tus géneros preferidos</Text>
+          {renderSelection(GENEROS, 'generos')}
+
+          <Text style={styles.subTitle}>Selecciona tus autores preferidos</Text>
+          {renderSelection(AUTORES, 'autores')}
+
+          <Text style={styles.subTitle}>¿Qué plataforma usas?</Text>
+          {renderSelection(PLATAFORMAS, 'plataforma')}
 
           <View style={styles.buttonGroup}>
-          <Button 
-            title={loading ? "Registrando..." : "Registrarse"} 
-            onPress={handleRegister}
-            disabled={loading}
-            style={[styles.button, { backgroundColor: colors.secondary }]}
-          />
-          
-          <Button 
-            title="Regresar" 
-            onPress={() => navigation.goBack()}
-            style={[styles.button, { backgroundColor: colors.red }]}
-          />
+            <Button title={loading ? "Registrando..." : "Registrarse"} onPress={handleRegister} disabled={loading} style={[styles.button, { backgroundColor: colors.secondary }]} />
+            <Button title="Regresar" onPress={() => navigation.goBack()} style={[styles.button, { backgroundColor: colors.red }]} />
+          </View>
         </View>
-        </View>
-
-        
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -211,7 +184,7 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 60,
   },
   header: {
     fontSize: 24,
@@ -219,6 +192,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: colors.primary,
     fontWeight: 'bold',
+  },
+  logo: {
+    alignSelf: 'center',
+    marginBottom: 20,
   },
   formContainer: {
     backgroundColor: colors.subbox,
@@ -232,17 +209,38 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   inputContainer: {
-    backgroundColor: colors.subbox,
-    color: 'white',
-    borderRadius: 8,
-    marginBottom: 15,
-    paddingHorizontal: 10,
+    marginBottom: 12,
+  },
+  subTitle: {
+    fontSize: 16,
+    marginTop: 20,
+    fontWeight: '600',
+  },
+  selectContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  selectItem: {
+    backgroundColor: '#f0f0f0',
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  selected: {
+    backgroundColor: 'gray',
+  },
+  selectText: {
+    color: '#333',
   },
   buttonGroup: {
-    width: '100%',
+    marginTop: 20,
   },
   button: {
-    marginVertical: 10,
+    marginBottom: 12,
   },
 });
 
