@@ -12,6 +12,7 @@ import RegisterScreen from './src/screens/RegisterScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import ChatScreen from './src/screens/ChatScreen';
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -85,6 +86,13 @@ const MainApp = () => {
         component={ProfileScreen} 
         options={{
           drawerIcon: ({ color }) => <Icon name="person" size={22} color={color} />,
+        }}
+      />
+      <Drawer.Screen 
+        name="Nuevo Chat" 
+        component={ChatScreen} 
+        options={{
+          drawerIcon: ({ color }) => <Icon name="chat" size={22} color={color} />,
         }}
       />
       {/* Pantalla oculta para Configuración */}

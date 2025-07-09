@@ -4,8 +4,8 @@ import Button from '../components/common/Button';
 import { theme, colors } from '../config/colors';
 
 const DashboardScreen = ({ navigation }) => {
-  const handleLogout = () => {
-    navigation.replace('Home');
+  const handleStartChat = () => {
+    navigation.navigate('Nuevo Chat'); 
   };
 
   return (
@@ -18,7 +18,11 @@ const DashboardScreen = ({ navigation }) => {
       <Text style={{ fontSize: 24, marginBottom: 20, color: "white" }}>Bienvenido al Dashboard</Text>
       <Text style={{ marginBottom: 20, color: "white" }}>Aqui se mostrara informacion importante al usuario por ejemplo terminos o una descripcion y el boton para iniciar un chat nuevo</Text>
       
-    
+      <Button 
+        title="Iniciar Chat" 
+        onPress={handleStartChat} // Cambiado a la nueva función
+        style={{ backgroundColor: colors.primary }}
+      />
     </View>
   );
 };
