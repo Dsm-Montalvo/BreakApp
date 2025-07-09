@@ -2,16 +2,15 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors } from '../config/colors';
 
-const ProfileScreen = () => {
+const SettingsScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.oval1} />
       <View style={styles.oval2} />
       <View style={styles.oval3} />
-
-
       
-      <Text style={styles.title}>Información del Usuario</Text>
+      
+      <Text style={styles.title}>Pantalla de configuracion u otras utilidades</Text>
       {/* Aquí mostrarías los datos del usuario */}
     </View>
   );
@@ -66,4 +65,4 @@ const styles = StyleSheet.create({
   
 });
 
-export default ProfileScreen;
+export default SettingsScreen;

@@ -40,7 +40,7 @@ const LoginScreen = ({ navigation }) => {
         console.log('Token recibido:', token);
         // Aquí podrías guardar el token si lo necesitas, ejemplo:
         // await AsyncStorage.setItem('token', token);
-        navigation.replace('Dashboard');
+        navigation.replace('MainApp');
       } else {
         Alert.alert('Error', 'No se recibió un token válido');
       }
