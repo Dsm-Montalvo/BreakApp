@@ -1,16 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, SafeAreaView, Image } from 'react-native';
+import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { colors } from '../config/colors';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// conexion con api 
 const API_URL = 'https://api.deepseek.com/v1/chat/completions';
 const API_KEY = 'sk-fa0535d709fe43c7bac0e2116a4f04c9';
-const BACKEND_URL = 'http://10.0.2.2:3001/takeabrakemovil/graphql';
+const BACKEND_URL = 'https://takeback.onrender.com/takeabrakemovil/graphql';
 
 const ChatScreen = () => {
   const [messages, setMessages] = useState([
-    { id: '1', text: '¡Hola! ¿En qué puedo ayudarte hoy?', sender: 'bot', timestamp: new Date().getTime() },
+    { id: '1', text: '¡Hola! ¿En qué puedo ayudarte hoy?', isUser: false, sender: 'bot', timestamp: new Date().getTime() },
   ]);
+
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const flatListRef = useRef(null);
@@ -22,6 +25,7 @@ const ChatScreen = () => {
     const userMessage = {
       id: Math.random().toString(),
       text: inputText,
+      isUser: true,
       sender: 'user',
       timestamp: new Date().getTime()
     };
@@ -29,30 +33,10 @@ const ChatScreen = () => {
     setMessages(prev => [...prev, userMessage]);
 
     try {
+      // 1. Guardar mensaje del usuario en backend
       await saveToBackend(userMessage);
-      const botResponse = await getBotResponse(inputText);
-      
-      const botMessage = {
-        id: Math.random().toString(),
-        text: botResponse,
-        sender: 'bot',
-        timestamp: new Date().getTime()
-      };
 
-      setMessages(prev => [...prev, botMessage]);
-      await saveToBackend(botMessage);
-
-    } catch (err) {
-      console.error('Error:', err);
-      Alert.alert('Error', 'Ocurrió un problema al procesar el mensaje.');
-    } finally {
-      setInputText('');
-      setIsSending(false);
-    }
-  };
-
-  const getBotResponse = async (userInput) => {
-    try {
+      // 2. Llamar a la API de DeepSeek
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
@@ -69,7 +53,7 @@ const ChatScreen = () => {
             },
             {
               role: 'user',
-              content: userInput
+              content: inputText
             }
           ],
           temperature: 0.7,
@@ -79,33 +63,55 @@ const ChatScreen = () => {
       });
 
       const data = await response.json();
-      return data?.choices?.[0]?.message?.content || 'No se obtuvo respuesta.';
-    } catch (error) {
-      console.error('Error al obtener respuesta del bot:', error);
-      return 'Lo siento, ocurrió un error al procesar tu mensaje.';
+
+      const botContent = data?.choices?.[0]?.message?.content || 'No se obtuvo respuesta.';
+
+      const botMessage = {
+        id: Math.random().toString(),
+        text: botContent,
+        isUser: false,
+        sender: 'bot',
+        timestamp: new Date().getTime()
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+
+      // 3. Guardar respuesta del bot
+      await saveToBackend(botMessage);
+
+    } catch (err) {
+      console.error('Error:', err);
+      Alert.alert('Error', 'Ocurrió un problema al procesar el mensaje.');
+    } finally {
+      setInputText('');
+      setIsSending(false);
     }
   };
 
   const saveToBackend = async (message) => {
     try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        console.log('No hay token de autenticación');
+        return;
+      }
+
       const query = `
         mutation GuardarMensaje($input: ChatbotMovilInput!) {
           guardarMensajesChat(input: $input) {
             id
-            mensaje {
-              rol
-              texto
-            }
           }
         }
       `;
 
       const variables = {
         input: {
-          mensaje: {
-            rol: message.sender,
-            texto: message.text
-          }
+          mensaje: [
+            {
+              rol: message.sender === 'user' ? 'user' : 'bot',
+              texto: message.text
+            }
+          ]
         }
       };
 
@@ -113,25 +119,17 @@ const ChatScreen = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ query, variables })
       });
 
       const resData = await response.json();
-      
       if (resData.errors) {
-        console.error('Errores GraphQL:', resData.errors);
-        throw new Error(resData.errors[0].message || 'Error al guardar el mensaje');
+        console.log('Errores en GraphQL:', resData.errors);
       }
-
-      if (!resData.data?.guardarMensajesChat) {
-        throw new Error('Respuesta inesperada del servidor');
-      }
-
-      return resData.data.guardarMensajesChat;
     } catch (error) {
-      console.error('Error en saveToBackend:', error);
-      throw error;
+      console.error('Error al guardar mensaje:', error);
     }
   };
 
@@ -146,13 +144,13 @@ const ChatScreen = () => {
   const formatTime = (timestamp) => new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.oval1} />
       <View style={styles.oval2} />
       <View style={styles.oval3} />
       
+      {/* Cabecera del chat */}
       <View style={styles.header}>
-        <Image source={{ uri: 'https://placehold.co/40x40/007bff/white?text=TB' }} style={styles.avatar} />
         <Text style={styles.headerTitle}>Take a Brake</Text>
         <View style={styles.headerStatus}>
           <View style={styles.statusIndicator} />
@@ -160,6 +158,7 @@ const ChatScreen = () => {
         </View>
       </View>
 
+      {/* Lista de mensajes */}
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -184,6 +183,7 @@ const ChatScreen = () => {
           keyboardDismissMode="on-drag"
         />
 
+        {/* Área de entrada de texto */}
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
@@ -210,7 +210,7 @@ const ChatScreen = () => {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -219,16 +219,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  safeArea: {
-    flex: 1,
-  },
   keyboardAvoidingView: {
     flex: 1,
   },
   header: {
     backgroundColor: '#c38aea',
     padding: 15,
-    flexDirection: 'row',
     alignItems: 'center',
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
@@ -239,17 +235,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
   headerTitle: {
     color: '#fff',
     fontSize: 20,
     fontWeight: 'bold',
-    marginRight: 10,
+    marginBottom: 5,
   },
   headerStatus: {
     flexDirection: 'row',
