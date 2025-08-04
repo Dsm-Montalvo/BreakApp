@@ -1,5 +1,5 @@
 import React,{useState,useRef} from "react";
-import { View, Text, TextInput, StyleSheet, TouchableOpacity,Animated,ScrollView,RefreshControl } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity,Animated,ScrollView,RefreshControl, ActivityIndicator } from 'react-native';
 import { colors } from '../config/colors';
 import {gql,useQuery} from '@apollo/client'
 
@@ -40,7 +40,13 @@ const ProfileScreen = () => {
       console.log(error)
       console.log(loading)
 
-      if(loading) return <Text>Cargando...</Text>
+    if (loading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      );
+    }
   
     const toggleMenu = () => {
         Animated.timing(animatedValue, {
@@ -57,7 +63,7 @@ const ProfileScreen = () => {
              refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
               }
-              contentContainerStyle={styles.scrollContent}
+              contentContainerStyle={styles.container}
             >
       {/* Óvalos decorativos */}
       <View style={styles.oval1} />
@@ -92,17 +98,7 @@ const ProfileScreen = () => {
         ))}
       </View>
 
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Notificaciones</Text>
-        <View style={styles.toggleWrapper}>
-          <View style={styles.activated}>
-            <Text style={styles.toggleTextActive}>✓ Activado</Text>
-          </View>
-          <View style={styles.deactivated}>
-            <Text style={styles.toggleTextInactive}>Desactivado</Text>
-          </View>
-        </View>
-      </View>
+      
 
       <View style={styles.buttonGroup}>
         <TouchableOpacity style={styles.cancelBtn}>
@@ -122,8 +118,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     position: 'relative',
-    padding: 20,
+    padding: 4,
     overflow: 'hidden',
+  },
+   loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: '#69015A',
+    alignItems: 'center',
   },
   title: {
     fontSize: 24,
