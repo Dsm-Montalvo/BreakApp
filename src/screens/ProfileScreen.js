@@ -1,169 +1,113 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React,{useState,useRef} from "react";
+import { View, Text, TextInput, StyleSheet, TouchableOpacity,Animated,ScrollView,RefreshControl, ActivityIndicator } from 'react-native';
 import { colors } from '../config/colors';
-import { useQuery, useMutation, gql } from '@apollo/client';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {gql,useQuery} from '@apollo/client'
 
-// Consulta GraphQL para obtener datos del usuario
-const GET_USER_DATA = gql`
-  query ObtenerUsuario {
-    obtenerUsuarios {
-      id
-      nombre
-      email
-      telefono
-      direccion
-    }
-  }
-`;
-
-// Mutación GraphQL para actualizar datos
-const UPDATE_USER_DATA = gql`
-  mutation ActualizarUsuario($input: UsuarioInput) {
-    actualizarUsuario(input: $input) {
-      id
-      nombre
-      email
-      telefono
-      direccion
-    }
-  }
-`;
-
-const ProfileScreen = ({ navigation }) => {
-  const [editable, setEditable] = useState(false);
-  const [userData, setUserData] = useState({
-    nombre: '',
-    email: '',
-    telefono: '',
-    direccion: ''
-  });
-
-  // Obtener datos del usuario
-  const { loading, error, data } = useQuery(GET_USER_DATA, {
-    onCompleted: (data) => {
-      if (data?.obtenerUsuarios) {
-        setUserData(data.obtenerUsuarios[0]);
-      }
-    },
-    fetchPolicy: 'network-only'
-  });
-
-  // Mutación para actualizar datos
-  const [updateUser] = useMutation(UPDATE_USER_DATA, {
-    onCompleted: (data) => {
-      Alert.alert('Éxito', 'Datos actualizados correctamente');
-      setEditable(false);
-    },
-    onError: (error) => {
-      Alert.alert('Error', error.message);
-    }
-  });
-
-  const handleInputChange = (name, value) => {
-    setUserData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSave = () => {
-    updateUser({
-      variables: {
-        input: {
-          ...userData
+const OBTENER_USUARIO = gql`
+    query obtenerUsuarios {
+        obtenerUsuarios {
+            id
+            nombre
+            apellido
+            edad
+            sexo
+            email
         }
-      }
-    });
-  };
+    }
+`;
 
-  if (loading) return <Text style={styles.loading}>Cargando datos...</Text>;
-  if (error) return <Text style={styles.error}>Error: {error.message}</Text>;
+const ProfileScreen = () => {
+  
+    const [refreshing, setRefreshing] = useState(false);
+    const [menuVisible, setMenuVisible] = useState(false);
+    const animatedValue = useRef(new Animated.Value(-250)).current;
 
+    // apollo
+    const {data,error,loading,refetch} = useQuery(OBTENER_USUARIO,{
+        notifyOnNetworkStatusChange:true
+    })
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        try {
+          await refetch();  // Refetch obtiene los datos actualizados desde el servidor
+        } catch (error) {
+          console.error("Error al recargar datos:", error);
+        }
+        setRefreshing(false);
+      };
+      console.log(data)
+      console.log(error)
+      console.log(loading)
+
+    if (loading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      );
+    }
+  
+    const toggleMenu = () => {
+        Animated.timing(animatedValue, {
+        toValue: menuVisible ? -250 : 0,
+        duration: 300,
+        useNativeDriver: false,
+        }).start();
+
+        setMenuVisible(!menuVisible);
+    };
   return (
     <View style={styles.container}>
+    <ScrollView 
+             refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
+              contentContainerStyle={styles.container}
+            >
+      {/* Óvalos decorativos */}
       <View style={styles.oval1} />
       <View style={styles.oval2} />
       <View style={styles.oval3} />
 
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.title}>Información del Usuario</Text>
+      <Text style={styles.title}>Perfil</Text>
+
+      <View style={styles.avatar}>
+        <Text style={styles.avatarText}>A</Text>
+      </View>
+      <View>
+        {data.obtenerUsuarios.map(usuarios =>(
+          <View key={usuarios.id} style={styles.formGroup}>
+    
+            <Text style={styles.label}>Nombre</Text>
+            <TextInput style={styles.input} >{usuarios.nombre}</TextInput>
         
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Nombre:</Text>
-          <TextInput
-            style={styles.input}
-            value={userData.nombre}
-            onChangeText={(text) => handleInputChange('nombre', text)}
-            editable={editable}
-            placeholder="Nombre completo"
-          />
-        </View>
+            <Text style={styles.label}>Apellidos</Text>
+            <TextInput style={styles.input} >{usuarios.apellido}</TextInput>
+            
+            <Text style={styles.label}>Edad</Text>
+            <TextInput style={styles.input} >{usuarios.edad}</TextInput>
+            
+            <Text style={styles.label}>sexo</Text>
+            <TextInput style={styles.input} >{usuarios.sexo}</TextInput>
+            
+            <Text style={styles.label}>email</Text>
+            <TextInput style={styles.input} >{usuarios.email}</TextInput>
+            
+          </View>
+        ))}
+      </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Email:</Text>
-          <TextInput
-            style={styles.input}
-            value={userData.email}
-            onChangeText={(text) => handleInputChange('email', text)}
-            editable={editable}
-            keyboardType="email-address"
-            placeholder="Correo electrónico"
-          />
-        </View>
+      
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Teléfono:</Text>
-          <TextInput
-            style={styles.input}
-            value={userData.telefono}
-            onChangeText={(text) => handleInputChange('telefono', text)}
-            editable={editable}
-            keyboardType="phone-pad"
-            placeholder="Número de teléfono"
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Dirección:</Text>
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            value={userData.direccion}
-            onChangeText={(text) => handleInputChange('direccion', text)}
-            editable={editable}
-            multiline
-            placeholder="Dirección completa"
-          />
-        </View>
-
-        <View style={styles.buttonContainer}>
-          {editable ? (
-            <>
-              <TouchableOpacity 
-                style={[styles.button, styles.saveButton]} 
-                onPress={handleSave}
-              >
-                <Icon name="save" size={20} color="#fff" />
-                <Text style={styles.buttonText}>Guardar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.button, styles.cancelButton]} 
-                onPress={() => setEditable(false)}
-              >
-                <Icon name="cancel" size={20} color="#fff" />
-                <Text style={styles.buttonText}>Cancelar</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <TouchableOpacity 
-              style={[styles.button, styles.editButton]} 
-              onPress={() => setEditable(true)}
-            >
-              <Icon name="edit" size={20} color="#fff" />
-              <Text style={styles.buttonText}>Editar Perfil</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+      <View style={styles.buttonGroup}>
+        <TouchableOpacity style={styles.cancelBtn}>
+          <Text style={styles.cancelText}>Cancelar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.saveBtn}>
+          <Text style={styles.saveText}>Cambiar</Text>
+        </TouchableOpacity>
+      </View>
       </ScrollView>
     </View>
   );
@@ -174,11 +118,96 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     position: 'relative',
+    padding: 4,
     overflow: 'hidden',
   },
-  scrollContainer: {
-    padding: 20,
-    paddingBottom: 40,
+   loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: '#69015A',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 60,
+    marginBottom: 20,
+    color: colors.primary,
+    textAlign: 'center',
+  },
+  avatar: {
+    backgroundColor: '#e9ddff',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    alignSelf: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  avatarText: {
+    fontSize: 24,
+    color: '#4a0072',
+  },
+  formGroup: {
+    marginBottom: 15,
+  },
+  label: {
+    color: '#fff',
+    marginBottom: 5,
+  },
+  input: {
+    backgroundColor: '#e2e2e2',
+    borderRadius: 8,
+    padding: 10,
+    color: '#000',
+  },
+  toggleWrapper: {
+    flexDirection: 'row',
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginTop: 5,
+  },
+  activated: {
+    backgroundColor: '#d6c4ff',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+  },
+  deactivated: {
+    backgroundColor: '#623d49',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+  },
+  toggleTextActive: {
+    color: '#3a2d4d',
+  },
+  toggleTextInactive: {
+    color: '#d4b8be',
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 30,
+  },
+  cancelBtn: {
+    backgroundColor: '#f44336',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  saveBtn: {
+    backgroundColor: '#4caf50',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  cancelText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  saveText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
   oval1: {
     position: 'absolute',
@@ -212,73 +241,6 @@ const styles = StyleSheet.create({
     right: -30,
     zIndex: 0,
     opacity: 0.7,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 30,
-    color: 'white',
-    textAlign: 'center',
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    color: 'white',
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    color: 'white',
-    padding: 15,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  multilineInput: {
-    minHeight: 100,
-    textAlignVertical: 'top',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
-    flexWrap: 'wrap',
-  },
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    marginHorizontal: 5,
-    marginVertical: 10,
-  },
-  editButton: {
-    backgroundColor: colors.primary,
-  },
-  saveButton: {
-    backgroundColor: '#4CAF50',
-  },
-  cancelButton: {
-    backgroundColor: '#F44336',
-  },
-  buttonText: {
-    color: 'white',
-    marginLeft: 8,
-    fontWeight: 'bold',
-  },
-  loading: {
-    color: 'white',
-    textAlign: 'center',
-    marginTop: 50,
-  },
-  error: {
-    color: 'red',
-    textAlign: 'center',
-    marginTop: 50,
   },
 });
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 import { theme, colors } from '../config/colors';
@@ -70,7 +70,12 @@ const LoginScreen = ({ navigation }) => {
       <View style={styles.oval3} />
 
       <View style={styles.content}>
-        
+        <Image 
+          source={require('../assets/images/logo2.png')} 
+          style={[theme.logo, styles.logo]} 
+        />
+        <Text style={styles.title}>Take a Break</Text>
+        <Text style={styles.header}>Iniciar Sesión</Text>
 
         <View style={styles.formContainer}>
           <Text style={styles.title}>Take a Break</Text>
@@ -164,7 +169,7 @@ const styles = StyleSheet.create({
   },
   title: {
     alignItems: 'center',
-    fontSize: 32,
+    fontSize: 40,
     color: colors.tittle,
     textAlign: 'center',
     fontWeight: 'bold',

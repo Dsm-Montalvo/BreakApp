@@ -1,6 +1,6 @@
 export const colors = {
-  primary: '#1763fa',
-  secondary: '#2057c5ff',
+  primary: '#1a90f0ff',
+  secondary: '#1d28eaff',
   background: '#69015A',
   text: '#333333',
   white: '#ffffff',
@@ -45,7 +45,6 @@ export const theme = {
     height: 150,
     resizeMode: 'contain',
     alignSelf: 'center',
-    marginBottom: 30,
   },
   oval1: {
     position: 'absolute',

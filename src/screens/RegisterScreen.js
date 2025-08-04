@@ -136,8 +136,8 @@ const RegisterScreen = ({ navigation }) => {
           {renderSelection(PLATAFORMAS, 'plataforma')}
 
           <View style={styles.buttonGroup}>
-            <Button title={loading ? "Registrando..." : "Registrarse"} onPress={handleRegister} disabled={loading} style={[styles.button, { backgroundColor: colors.secondary }]} />
-            <Button title="Regresar" onPress={() => navigation.goBack()} style={[styles.button, { backgroundColor: colors.red }]} />
+            <Button title={loading ? "Registrando..." : "Registrarse"} onPress={handleRegister} disabled={loading} style={[styles.button, { backgroundColor: colors.primary }]} />
+            <Button title="Regresar" onPress={() => navigation.goBack()} style={[styles.button, { backgroundColor: colors.secondary }]} />
           </View>
         </View>
       </ScrollView>
