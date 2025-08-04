@@ -70,10 +70,11 @@ const LoginScreen = ({ navigation }) => {
       <View style={styles.oval3} />
 
       <View style={styles.content}>
-        <Text style={styles.title}>Take a Break</Text>
-        <Text style={styles.header}>Iniciar Sesión</Text>
+        
 
         <View style={styles.formContainer}>
+          <Text style={styles.title}>Take a Break</Text>
+          <Text style={styles.header}>Iniciar Sesión</Text>
           <Input
             label="Correo electrónico"
             value={email}
@@ -103,7 +104,7 @@ const LoginScreen = ({ navigation }) => {
             <Button
               title="Regresar"
               onPress={() => navigation.goBack()}
-              style={[styles.button, { backgroundColor: colors.red }]}
+              style={[styles.button, { backgroundColor: colors.secondary }]}
             />
           </View>
         </View>
@@ -165,6 +166,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     fontSize: 32,
     color: colors.tittle,
+    textAlign: 'center',
     fontWeight: 'bold',
     marginBottom: 10,
   },
