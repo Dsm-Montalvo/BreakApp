@@ -4,12 +4,17 @@ import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 import { theme, colors } from '../config/colors';
 import { gql, useMutation } from '@apollo/client';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LOGIN_USER = gql`
   mutation AutenticarUsuarios($input: AutenticarInput!) {
     autenticarUsuarios(input: $input) {
       token
+      usuario {
+        id
+        email
+        nombre
+      }
     }
   }
 `;
@@ -36,10 +41,16 @@ const LoginScreen = ({ navigation }) => {
       });
 
       const token = data?.autenticarUsuarios?.token;
+      const usuario = data?.autenticarUsuarios?.usuario;
+      
       if (token) {
-        console.log('Token recibido:', token);
-        // Aquí podrías guardar el token si lo necesitas, ejemplo:
-        // await AsyncStorage.setItem('token', token);
+        // Guardar token y datos del usuario
+        await AsyncStorage.setItem('token', token);
+        if (usuario) {
+          await AsyncStorage.setItem('usuarioId', usuario.id);
+          await AsyncStorage.setItem('usuarioEmail', usuario.email);
+          await AsyncStorage.setItem('usuarioNombre', usuario.nombre);
+        }
         navigation.replace('MainApp');
       } else {
         Alert.alert('Error', 'No se recibió un token válido');
