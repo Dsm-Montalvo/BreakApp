@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform, Image, Dimensions } from 'react-native';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 import { theme, colors } from '../config/colors';
@@ -22,7 +22,15 @@ const LOGIN_USER = gql`
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [dimensions, setDimensions] = useState(Dimensions.get('window'));
   const [loginUser, { loading }] = useMutation(LOGIN_USER);
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({window}) => {
+      setDimensions(window);
+    });
+    return () => subscription?.remove();
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -44,7 +52,6 @@ const LoginScreen = ({ navigation }) => {
       const usuario = data?.autenticarUsuarios?.usuario;
       
       if (token) {
-        // Guardar token y datos del usuario
         await AsyncStorage.setItem('token', token);
         if (usuario) {
           await AsyncStorage.setItem('usuarioId', usuario.id);
@@ -64,6 +71,7 @@ const LoginScreen = ({ navigation }) => {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
     >
       <View style={styles.oval1} />
       <View style={styles.oval2} />
@@ -75,18 +83,24 @@ const LoginScreen = ({ navigation }) => {
           style={[theme.logo, styles.logo]} 
         />
         <Text style={styles.title}>Take a Break</Text>
-        <Text style={styles.header}>Iniciar Sesión</Text>
-
-        <View style={styles.formContainer}>
-          <Text style={styles.title}>Take a Break</Text>
+        
+        <View style={[
+          styles.formContainer,
+          dimensions.width > 500 && { padding: 40, maxWidth: 500 }
+        ]}>
           <Text style={styles.header}>Iniciar Sesión</Text>
+          
           <Input
             label="Correo electrónico"
             value={email}
             onChangeText={setEmail}
             placeholder="Ingresa tu correo"
             keyboardType="email-address"
+            autoCapitalize="none"
             containerStyle={styles.inputContainer}
+            inputStyle={styles.inputText}
+            placeholderTextColor="#000000"
+            labelStyle={styles.labelStyle}
           />
 
           <Input
@@ -96,6 +110,11 @@ const LoginScreen = ({ navigation }) => {
             placeholder="Ingresa tu contraseña"
             secureTextEntry
             containerStyle={styles.inputContainer}
+            inputStyle={styles.inputText}
+            placeholderTextColor="#777"
+            labelStyle={styles.labelStyle}
+            autoCapitalize="none"
+            returnKeyType="done"
           />
 
           <View style={styles.buttonGroup}>
@@ -104,12 +123,14 @@ const LoginScreen = ({ navigation }) => {
               onPress={handleLogin}
               disabled={loading}
               style={[styles.button, { backgroundColor: colors.primary }]}
+              textStyle={styles.buttonText}
             />
 
             <Button
               title="Regresar"
               onPress={() => navigation.goBack()}
               style={[styles.button, { backgroundColor: colors.secondary }]}
+              textStyle={styles.buttonText}
             />
           </View>
         </View>
@@ -159,16 +180,17 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     zIndex: 1,
+    flex: 1,
+    justifyContent: 'center',
   },
   header: {
     fontSize: 24,
     marginBottom: 20,
     textAlign: 'center',
-    color: colors.primary,
+    color: 'white',
     fontWeight: 'bold',
   },
   title: {
-    alignItems: 'center',
     fontSize: 40,
     color: colors.tittle,
     textAlign: 'center',
@@ -176,7 +198,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   formContainer: {
-    backgroundColor: '#B42BC0',
+    backgroundColor: '#64a6e3',
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
@@ -185,19 +207,36 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    width: '90%',
+    alignSelf: 'center',
   },
   inputContainer: {
     backgroundColor: colors.subbox,
-    color: 'white',
     borderRadius: 8,
     marginBottom: 15,
     paddingHorizontal: 10,
+  },
+  inputText: {
+    color: 'black',
+    fontSize: 16,
+  },
+  labelStyle: {
+    color: 'black',
+    marginBottom: 5,
+    fontWeight: '600',
   },
   buttonGroup: {
     width: '100%',
   },
   button: {
     marginVertical: 10,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

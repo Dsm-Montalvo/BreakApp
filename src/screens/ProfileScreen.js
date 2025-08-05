@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
    loadingContainer: {
     flex: 1,
     justifyContent: 'center',
-    backgroundColor: '#69015A',
+    backgroundColor: '#b8d1e7',
     alignItems: 'center',
   },
   title: {

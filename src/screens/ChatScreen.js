@@ -4,7 +4,6 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { colors } from '../config/colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// conexion con api 
 const API_URL = 'https://api.deepseek.com/v1/chat/completions';
 const API_KEY = 'sk-fa0535d709fe43c7bac0e2116a4f04c9';
 const BACKEND_URL = 'https://takeback.onrender.com/takeabrakemovil/graphql';
@@ -33,10 +32,8 @@ const ChatScreen = () => {
     setMessages(prev => [...prev, userMessage]);
 
     try {
-      // 1. Guardar mensaje del usuario en backend
       await saveToBackend(userMessage);
 
-      // 2. Llamar a la API de DeepSeek
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
@@ -63,7 +60,6 @@ const ChatScreen = () => {
       });
 
       const data = await response.json();
-
       const botContent = data?.choices?.[0]?.message?.content || 'No se obtuvo respuesta.';
 
       const botMessage = {
@@ -76,9 +72,7 @@ const ChatScreen = () => {
 
       setMessages(prev => [...prev, botMessage]);
 
-      // 3. Guardar respuesta del bot
       await saveToBackend(botMessage);
-
     } catch (err) {
       console.error('Error:', err);
       Alert.alert('Error', 'Ocurrió un problema al procesar el mensaje.');
@@ -144,26 +138,24 @@ const ChatScreen = () => {
   const formatTime = (timestamp) => new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <View style={styles.container}>
-      <View style={styles.oval1} />
-      <View style={styles.oval2} />
-      <View style={styles.oval3} />
-      
-      {/* Cabecera del chat */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Take a Brake</Text>
-        <View style={styles.headerStatus}>
-          <View style={styles.statusIndicator} />
-          <Text style={styles.statusText}>En línea</Text>
-        </View>
-      </View>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+    >
+      <View style={{ flex: 1 }}>
+        <View style={styles.oval1} />
+        <View style={styles.oval2} />
+        <View style={styles.oval3} />
 
-      {/* Lista de mensajes */}
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
-      >
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Take a Brake</Text>
+          <View style={styles.headerStatus}>
+            <View style={styles.statusIndicator} />
+            <Text style={styles.statusText}>En línea</Text>
+          </View>
+        </View>
+
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -181,9 +173,9 @@ const ChatScreen = () => {
           contentContainerStyle={styles.chatContainer}
           showsVerticalScrollIndicator={false}
           keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
         />
 
-        {/* Área de entrada de texto */}
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
@@ -209,8 +201,8 @@ const ChatScreen = () => {
             )}
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -219,12 +211,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
   header: {
-    backgroundColor: '#c38aea',
-    padding: 15,
+    backgroundColor: '#8fbfed',
+    padding: 5,
     alignItems: 'center',
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
@@ -309,10 +298,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#eee',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
   },
   input: {
     flex: 1,

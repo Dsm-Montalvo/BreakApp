@@ -15,8 +15,8 @@ const DashboardScreen = ({ navigation }) => {
       <View style={styles.oval3} />
       
       
-      <Text style={{ fontSize: 24, marginBottom: 20, color: "white" }}>Bienvenido al Dashboard</Text>
-      <Text style={{ marginBottom: 20, color: "white" }}>Aqui se mostrara informacion importante al usuario por ejemplo terminos o una descripcion y el boton para iniciar un chat nuevo</Text>
+      <Text style={{ fontSize: 24, marginBottom: 20, color: "black" }}>Bienvenido al Dashboard</Text>
+      <Text style={{ marginBottom: 20, color: "black" }}>Aqui se mostrara informacion importante al usuario por ejemplo terminos o una descripcion y el boton para iniciar un chat nuevo</Text>
       
       <Button 
         title="Iniciar Chat" 

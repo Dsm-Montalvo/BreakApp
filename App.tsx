@@ -62,14 +62,16 @@ const MainApp = () => {
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         drawerStyle: {
-          backgroundColor: '#c38aea', // Color morado
+          //backgroundColor: '#c38aea', // Color morado
+          backgroundColor:'#3f8fd8',
           width: 280,
         },
         drawerActiveTintColor: '#fff',
         drawerInactiveTintColor: '#fff',
         drawerActiveBackgroundColor: 'rgba(255, 255, 255, 0.1)',
         headerStyle: {
-          backgroundColor: '#c38aea',
+          backgroundColor:'#3f8fd8',
+          //backgroundColor: '#c38aea',
         },
         headerTintColor: '#fff',
       }}
@@ -120,7 +122,7 @@ const App = () => {
             },
           }),
           headerStyle: {
-            backgroundColor: '#c38aea',
+            backgroundColor: '#8fbfed',
           },
           headerTintColor: '#fff',
           headerTitleStyle: {
