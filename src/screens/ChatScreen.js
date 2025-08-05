@@ -1,119 +1,62 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  FlatList, 
+  StyleSheet, 
+  TouchableOpacity, 
+  KeyboardAvoidingView, 
+  Platform, 
+  ActivityIndicator, 
+  Alert,
+  Modal,
+  Pressable
+} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { colors } from '../config/colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// conexion con api 
 const API_URL = 'https://api.deepseek.com/v1/chat/completions';
 const API_KEY = 'sk-fa0535d709fe43c7bac0e2116a4f04c9';
-const BACKEND_URL = 'https://takeback.onrender.com/takeabrakemovil/graphql';
+const BACKEND_URL = 'http://10.0.2.2:3001/takeabrakemovil/graphql';
 
 const ChatScreen = () => {
-  const [messages, setMessages] = useState([
-    { id: '1', text: '¡Hola! ¿En qué puedo ayudarte hoy?', isUser: false, sender: 'bot', timestamp: new Date().getTime() },
-  ]);
-
+  // Estados para el chat
+  const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [currentConversationId, setCurrentConversationId] = useState(null);
+  const [isNewConversation, setIsNewConversation] = useState(true);
+  const [conversationsList, setConversationsList] = useState([]);
+  const [showConversationsModal, setShowConversationsModal] = useState(false);
+  
   const flatListRef = useRef(null);
 
-  const sendMessage = async () => {
-    if (!inputText.trim() || isSending) return;
+  // Efecto para cargar historial de conversaciones al iniciar
+  useEffect(() => {
+    loadConversationsHistory();
+  }, []);
 
-    setIsSending(true);
-    const userMessage = {
-      id: Math.random().toString(),
-      text: inputText,
-      isUser: true,
-      sender: 'user',
-      timestamp: new Date().getTime()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-
-    try {
-      // 1. Guardar mensaje del usuario en backend
-      await saveToBackend(userMessage);
-
-      // 2. Llamar a la API de DeepSeek
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${API_KEY}`,
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'system',
-              content: 'Eres un asistente que recomienda libros, música o películas según el estado emocional del usuario. Solo puedes responder sobre eso.'
-            },
-            {
-              role: 'user',
-              content: inputText
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 2000,
-          stream: false
-        })
-      });
-
-      const data = await response.json();
-
-      const botContent = data?.choices?.[0]?.message?.content || 'No se obtuvo respuesta.';
-
-      const botMessage = {
-        id: Math.random().toString(),
-        text: botContent,
-        isUser: false,
-        sender: 'bot',
-        timestamp: new Date().getTime()
-      };
-
-      setMessages(prev => [...prev, botMessage]);
-
-      // 3. Guardar respuesta del bot
-      await saveToBackend(botMessage);
-
-    } catch (err) {
-      console.error('Error:', err);
-      Alert.alert('Error', 'Ocurrió un problema al procesar el mensaje.');
-    } finally {
-      setInputText('');
-      setIsSending(false);
-    }
-  };
-
-  const saveToBackend = async (message) => {
+  // Cargar historial de conversaciones
+  const loadConversationsHistory = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      if (!token) {
-        console.log('No hay token de autenticación');
-        return;
-      }
+      if (!token) return;
 
       const query = `
-        mutation GuardarMensaje($input: ChatbotMovilInput!) {
-          guardarMensajesChat(input: $input) {
+        query {
+          obtenerChatPorUsuario {
             id
+            mensaje {
+              rol
+              texto
+              fecha
+            }
+            fecha
           }
         }
       `;
-
-      const variables = {
-        input: {
-          mensaje: [
-            {
-              rol: message.sender === 'user' ? 'user' : 'bot',
-              texto: message.text
-            }
-          ]
-        }
-      };
 
       const response = await fetch(BACKEND_URL, {
         method: 'POST',
@@ -121,18 +64,208 @@ const ChatScreen = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ query, variables })
+        body: JSON.stringify({ query })
       });
 
       const resData = await response.json();
-      if (resData.errors) {
-        console.log('Errores en GraphQL:', resData.errors);
+      if (resData.data?.obtenerChatPorUsuario) {
+        setConversationsList(resData.data.obtenerChatPorUsuario);
       }
     } catch (error) {
-      console.error('Error al guardar mensaje:', error);
+      console.error('Error al cargar historial:', error);
     }
   };
 
+  // Iniciar nueva conversación
+  const startNewConversation = () => {
+    setMessages([
+      { 
+        id: '1', 
+        text: '¡Hola! ¿En qué puedo ayudarte hoy?', 
+        isUser: false, 
+        sender: 'bot', 
+        timestamp: new Date().getTime() 
+      }
+    ]);
+    setCurrentConversationId(null);
+    setIsNewConversation(true);
+    setShowConversationsModal(false);
+  };
+
+  // Cargar conversación existente
+  const loadConversation = (conversation) => {
+    const formattedMessages = conversation.mensaje.map((msg, index) => ({
+      id: `${conversation.id}-${index}`,
+      text: msg.texto,
+      isUser: msg.rol === 'user',
+      sender: msg.rol,
+      timestamp: new Date(msg.fecha).getTime()
+    }));
+    
+    setMessages(formattedMessages);
+    setCurrentConversationId(conversation.id);
+    setIsNewConversation(false);
+    setShowConversationsModal(false);
+  };
+
+  // Enviar mensaje
+const sendMessage = async () => {
+  if (!inputText.trim() || isSending) return;
+
+  setIsSending(true);
+  
+  // Crear mensaje de usuario
+  const userMessage = {
+    id: Math.random().toString(),
+    text: inputText,
+    isUser: true,
+    sender: 'user', // Exactamente 'user'
+    timestamp: new Date().getTime()
+  };
+
+  // Agregar mensaje de usuario inmediatamente
+  setMessages(prev => [...prev, userMessage]);
+
+  try {
+    // Obtener respuesta del bot
+    const botResponse = await getBotResponse(inputText);
+    const botMessage = {
+      id: Math.random().toString(),
+      text: botResponse,
+      isUser: false,
+      sender: 'bot', // Exactamente 'bot'
+      timestamp: new Date().getTime()
+    };
+
+    // Agregar respuesta del bot
+    setMessages(prev => [...prev, botMessage]);
+
+    // Guardar ambos mensajes en el backend
+    const saveSuccess = await saveToBackend([userMessage, botMessage]);
+    
+    if (!saveSuccess) {
+      Alert.alert('Error', 'No se pudo guardar la conversación');
+      // Opcional: revertir los mensajes si falla el guardado
+      setMessages(prev => prev.filter(m => m.id !== userMessage.id && m.id !== botMessage.id));
+    } else if (isNewConversation) {
+      setIsNewConversation(false);
+    }
+
+  } catch (error) {
+    console.error('Error en sendMessage:', error);
+    Alert.alert('Error', 'Ocurrió un problema al enviar el mensaje');
+  } finally {
+    setInputText('');
+    setIsSending(false);
+  }
+};
+
+  // Obtener respuesta del bot desde la API
+  const getBotResponse = async (userInput) => {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`,
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: 'Eres un asistente que recomienda libros, música o películas según el estado emocional del usuario. Solo puedes responder sobre eso.'
+          },
+          {
+            role: 'user',
+            content: userInput
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+        stream: false
+      })
+    });
+
+    const data = await response.json();
+    return data?.choices?.[0]?.message?.content || 'No se obtuvo respuesta.';
+  };
+
+  // Guardar mensajes en el backend
+const saveToBackend = async (newMessages) => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) {
+      console.log('No hay token de autenticación');
+      return false;
+    }
+
+    // Preparar los mensajes en el formato exacto que espera el backend
+    const mensajesParaBackend = newMessages.map(msg => ({
+      rol: msg.sender, // 'user' o 'bot'
+      texto: msg.text
+    }));
+
+    const query = `
+      mutation GuardarMensaje($input: ChatbotMovilInput!, $conversationId: ID) {
+        guardarMensajesChat(input: $input, conversationId: $conversationId) {
+          id
+          mensaje {
+            rol
+            texto
+          }
+        }
+      }
+    `;
+
+    const variables = {
+      input: {
+        mensaje: mensajesParaBackend
+      },
+      conversationId: isNewConversation ? null : currentConversationId
+    };
+
+    console.log('Enviando a GraphQL:', { query, variables }); // Debug
+
+    const response = await fetch(BACKEND_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        query,
+        variables
+      })
+    });
+
+    const responseData = await response.json();
+    console.log('Respuesta del backend:', responseData); // Debug
+
+    if (responseData.errors) {
+      console.error('Errores GraphQL:', responseData.errors);
+      return false;
+    }
+
+    if (responseData.data?.guardarMensajesChat?.id) {
+      if (isNewConversation) {
+        setCurrentConversationId(responseData.data.guardarMensajesChat.id);
+      }
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error('Error en saveToBackend:', error);
+    return false;
+  }
+};
+
+  // Formatear hora
+  const formatTime = (timestamp) => 
+    new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  // Efecto para auto-scroll
   useEffect(() => {
     if (messages.length > 0 && flatListRef.current) {
       setTimeout(() => {
@@ -140,8 +273,6 @@ const ChatScreen = () => {
       }, 100);
     }
   }, [messages]);
-
-  const formatTime = (timestamp) => new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   return (
     <View style={styles.container}>
@@ -151,11 +282,22 @@ const ChatScreen = () => {
       
       {/* Cabecera del chat */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Take a Brake</Text>
-        <View style={styles.headerStatus}>
-          <View style={styles.statusIndicator} />
-          <Text style={styles.statusText}>En línea</Text>
+
+        
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>Take a Brake</Text>
+          <View style={styles.headerStatus}>
+            <View style={styles.statusIndicator} />
+            <Text style={styles.statusText}>En línea</Text>
+          </View>
         </View>
+        
+        <TouchableOpacity 
+          onPress={startNewConversation}
+          style={styles.newChatButton}
+        >
+          <Icon name="add" size={24} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       {/* Lista de mensajes */}
@@ -169,11 +311,20 @@ const ChatScreen = () => {
           data={messages}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View style={[styles.messageContainer, item.sender === 'user' ? styles.userMessage : styles.botMessage]}>
-              <Text style={[styles.messageText, item.sender === 'user' ? styles.userMessageText : styles.botMessageText]}>
+            <View style={[
+              styles.messageContainer, 
+              item.sender === 'user' ? styles.userMessage : styles.botMessage
+            ]}>
+              <Text style={[
+                styles.messageText, 
+                item.sender === 'user' ? styles.userMessageText : styles.botMessageText
+              ]}>
                 {item.text}
               </Text>
-              <Text style={[styles.messageTime, item.sender === 'user' ? styles.userMessageTime : styles.botMessageTime]}>
+              <Text style={[
+                styles.messageTime, 
+                item.sender === 'user' ? styles.userMessageTime : styles.botMessageTime
+              ]}>
                 {formatTime(item.timestamp)}
               </Text>
             </View>
@@ -199,7 +350,10 @@ const ChatScreen = () => {
           />
           <TouchableOpacity
             onPress={sendMessage}
-            style={[styles.sendButton, (isSending || !inputText.trim()) && styles.disabledButton]}
+            style={[
+              styles.sendButton, 
+              (isSending || !inputText.trim()) && styles.disabledButton
+            ]}
             disabled={isSending || !inputText.trim()}
           >
             {isSending ? (
@@ -210,6 +364,56 @@ const ChatScreen = () => {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Modal de conversaciones */}
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={showConversationsModal}
+        onRequestClose={() => setShowConversationsModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Tus conversaciones</Text>
+            <TouchableOpacity 
+              onPress={() => setShowConversationsModal(false)}
+              style={styles.closeButton}
+            >
+              <Icon name="close" size={24} color="#000" />
+            </TouchableOpacity>
+          </View>
+          
+          <FlatList
+            data={conversationsList}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.conversationItem}
+                onPress={() => loadConversation(item)}
+              >
+                <Text style={styles.conversationText} numberOfLines={1}>
+                  {item.mensaje[0]?.texto || 'Nueva conversación'}
+                </Text>
+                <Text style={styles.conversationDate}>
+                  {new Date(item.fecha).toLocaleDateString()}
+                </Text>
+              </TouchableOpacity>
+            )}
+            ListEmptyComponent={
+              <Text style={styles.noConversationsText}>
+                No hay conversaciones anteriores
+              </Text>
+            }
+          />
+          
+          <TouchableOpacity
+            style={styles.newConversationButton}
+            onPress={startNewConversation}
+          >
+            <Text style={styles.newConversationButtonText}>Nueva conversación</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -225,7 +429,9 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#c38aea',
     padding: 15,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     zIndex: 1,
@@ -234,6 +440,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+  },
+  headerTitleContainer: {
+    alignItems: 'center',
+    flex: 1,
   },
   headerTitle: {
     color: '#fff',
@@ -255,6 +465,12 @@ const styles = StyleSheet.create({
   statusText: {
     color: '#fff',
     fontSize: 12,
+  },
+  conversationButton: {
+    padding: 5,
+  },
+  newChatButton: {
+    padding: 5,
   },
   chatContainer: {
     padding: 16,
@@ -368,6 +584,58 @@ const styles = StyleSheet.create({
     right: -30,
     zIndex: 0,
     opacity: 0.3,
+  },
+  // Estilos para el modal
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingTop: Platform.OS === 'ios' ? 40 : 20,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  closeButton: {
+    padding: 5,
+  },
+  conversationItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  conversationText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  conversationDate: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 5,
+  },
+  noConversationsText: {
+    textAlign: 'center',
+    marginTop: 20,
+    color: '#666',
+  },
+  newConversationButton: {
+    backgroundColor: '#c38aea',
+    borderRadius: 25,
+    padding: 15,
+    margin: 20,
+    alignItems: 'center',
+  },
+  newConversationButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

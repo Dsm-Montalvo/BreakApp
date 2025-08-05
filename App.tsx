@@ -13,99 +13,14 @@ import DashboardScreen from './src/screens/DashboardScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import ChatScreen from './src/screens/ChatScreen';
+import CustomDrawerContent from './src/components/CustomDrawerContent';
+import { MainApp } from './src/components/MainApp';
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
 
-// Crear el Drawer Navigator que se usará después del login
-const CustomDrawerContent = (props) => {
-  return (
-    <View style={styles.container}>
-      {/* Contenido principal del menú */}
-      <DrawerContentScrollView {...props}>
-        <View style={styles.topSection}>
-          <DrawerItemList {...props} />
-        </View>
-      </DrawerContentScrollView>
+<CustomDrawerContent/>
 
-      {/* Sección inferior separada */}
-      <View style={styles.bottomSection}>
-        {/* Línea divisoria */}
-        <View style={styles.divider} />
-        
-        {/* Opción de Configuración */}
-        <DrawerItem
-          label="Configuración"
-          icon={({ color }) => <Icon name="settings" size={22} color={color} />}
-          onPress={() => props.navigation.navigate('Settings')}
-          labelStyle={styles.menuItemLabel}
-        />
-        
-        {/* Opción de Cerrar Sesión */}
-        <DrawerItem
-          label="Cerrar Sesión"
-          icon={({ color }) => <Icon name="exit-to-app" size={22} color={color} />}
-          onPress={() => {
-            // Lógica para cerrar sesión
-            props.navigation.replace('Home');
-          }}
-          labelStyle={[styles.menuItemLabel, styles.logoutLabel]}
-        />
-      </View>
-    </View>
-  );
-};
-
-const MainApp = () => {
-  return (
-    <Drawer.Navigator
-      drawerContent={(props) => <CustomDrawerContent {...props} />}
-      screenOptions={{
-        drawerStyle: {
-          backgroundColor: '#c38aea', // Color morado
-          width: 280,
-        },
-        drawerActiveTintColor: '#fff',
-        drawerInactiveTintColor: '#fff',
-        drawerActiveBackgroundColor: 'rgba(255, 255, 255, 0.1)',
-        headerStyle: {
-          backgroundColor: '#c38aea',
-        },
-        headerTintColor: '#fff',
-      }}
-    >
-      <Drawer.Screen 
-        name="Inicio" 
-        component={DashboardScreen} 
-        options={{
-          drawerIcon: ({ color }) => <Icon name="home" size={22} color={color} />,
-        }}
-      />
-      <Drawer.Screen 
-        name="Perfil" 
-        component={ProfileScreen} 
-        options={{
-          drawerIcon: ({ color }) => <Icon name="person" size={22} color={color} />,
-        }}
-      />
-      <Drawer.Screen 
-        name="Nuevo Chat" 
-        component={ChatScreen} 
-        options={{
-          drawerIcon: ({ color }) => <Icon name="chat" size={22} color={color} />,
-        }}
-      />
-      {/* Pantalla oculta para Configuración */}
-      <Drawer.Screen 
-        name="Settings" 
-        component={SettingsScreen} 
-        options={{
-          drawerItemStyle: { display: 'none' } // Oculta esta opción del menú principal
-        }}
-      />
-    </Drawer.Navigator>
-  );
-};
 
 const App = () => {
   return (
