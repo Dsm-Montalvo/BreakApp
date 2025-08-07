@@ -17,12 +17,11 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { colors } from '../config/colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'https://api.deepseek.com/v1/chat/completions';
-const API_KEY = 'sk-fa0535d709fe43c7bac0e2116a4f04c9';
+const FLASK_API_URL = 'http://10.0.2.2:5000/chat'; // Para emulador Android
+
 const BACKEND_URL = 'http://10.0.2.2:3001/takeabrakemovil/graphql';
 
 const ChatScreen = () => {
-  // Estados para el chat
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -33,12 +32,10 @@ const ChatScreen = () => {
   
   const flatListRef = useRef(null);
 
-  // Efecto para cargar historial de conversaciones al iniciar
   useEffect(() => {
     loadConversationsHistory();
   }, []);
 
-  // Cargar historial de conversaciones
   const loadConversationsHistory = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -76,7 +73,6 @@ const ChatScreen = () => {
     }
   };
 
-  // Iniciar nueva conversación
   const startNewConversation = () => {
     setMessages([
       { 
@@ -84,7 +80,8 @@ const ChatScreen = () => {
         text: '¡Hola! ¿En qué puedo ayudarte hoy?', 
         isUser: false, 
         sender: 'bot', 
-        timestamp: new Date().getTime() 
+        timestamp: new Date().getTime(),
+        emotion: 'neutral' 
       }
     ]);
     setCurrentConversationId(null);
@@ -92,14 +89,14 @@ const ChatScreen = () => {
     setShowConversationsModal(false);
   };
 
-  // Cargar conversación existente
   const loadConversation = (conversation) => {
     const formattedMessages = conversation.mensaje.map((msg, index) => ({
       id: `${conversation.id}-${index}`,
       text: msg.texto,
       isUser: msg.rol === 'user',
       sender: msg.rol,
-      timestamp: new Date(msg.fecha).getTime()
+      timestamp: new Date(msg.fecha).getTime(),
+      emotion: msg.emotion || 'neutral'
     }));
     
     setMessages(formattedMessages);
@@ -108,164 +105,134 @@ const ChatScreen = () => {
     setShowConversationsModal(false);
   };
 
-  // Enviar mensaje
-const sendMessage = async () => {
-  if (!inputText.trim() || isSending) return;
+  const sendMessage = async () => {
+    if (!inputText.trim() || isSending) return;
 
-  setIsSending(true);
-  
-  // Crear mensaje de usuario
-  const userMessage = {
-    id: Math.random().toString(),
-    text: inputText,
-    isUser: true,
-    sender: 'user', // Exactamente 'user'
-    timestamp: new Date().getTime()
-  };
-
-  // Agregar mensaje de usuario inmediatamente
-  setMessages(prev => [...prev, userMessage]);
-
-  try {
-    // Obtener respuesta del bot
-    const botResponse = await getBotResponse(inputText);
-    const botMessage = {
+    setIsSending(true);
+    
+    const userMessage = {
       id: Math.random().toString(),
-      text: botResponse,
-      isUser: false,
-      sender: 'bot', // Exactamente 'bot'
+      text: inputText,
+      isUser: true,
+      sender: 'user',
       timestamp: new Date().getTime()
     };
 
-    // Agregar respuesta del bot
-    setMessages(prev => [...prev, botMessage]);
+    setMessages(prev => [...prev, userMessage]);
 
-    // Guardar ambos mensajes en el backend
-    const saveSuccess = await saveToBackend([userMessage, botMessage]);
-    
-    if (!saveSuccess) {
-      Alert.alert('Error', 'No se pudo guardar la conversación');
-      // Opcional: revertir los mensajes si falla el guardado
-      setMessages(prev => prev.filter(m => m.id !== userMessage.id && m.id !== botMessage.id));
-    } else if (isNewConversation) {
-      setIsNewConversation(false);
+    try {
+      // Obtener respuesta del servidor Flask
+      const response = await fetch(FLASK_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          texto: inputText
+        })
+      });
+
+      const data = await response.json();
+      
+      const botMessage = {
+        id: Math.random().toString(),
+        text: data.respuesta_generada,
+        isUser: false,
+        sender: 'bot',
+        timestamp: new Date().getTime(),
+        emotion: data.emocion_detectada
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+
+      const saveSuccess = await saveToBackend([userMessage, botMessage]);
+      
+      if (!saveSuccess) {
+        Alert.alert('Error', 'No se pudo guardar la conversación');
+        setMessages(prev => prev.filter(m => m.id !== userMessage.id && m.id !== botMessage.id));
+      } else if (isNewConversation) {
+        setIsNewConversation(false);
+      }
+
+    } catch (error) {
+      console.error('Error en sendMessage:', error);
+      Alert.alert('Error', 'Ocurrió un problema al enviar el mensaje');
+    } finally {
+      setInputText('');
+      setIsSending(false);
     }
-
-  } catch (error) {
-    console.error('Error en sendMessage:', error);
-    Alert.alert('Error', 'Ocurrió un problema al enviar el mensaje');
-  } finally {
-    setInputText('');
-    setIsSending(false);
-  }
-};
-
-  // Obtener respuesta del bot desde la API
-  const getBotResponse = async (userInput) => {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`,
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          {
-            role: 'system',
-            content: 'Eres un asistente que recomienda libros, música o películas según el estado emocional del usuario. Solo puedes responder sobre eso.'
-          },
-          {
-            role: 'user',
-            content: userInput
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-        stream: false
-      })
-    });
-
-    const data = await response.json();
-    return data?.choices?.[0]?.message?.content || 'No se obtuvo respuesta.';
   };
 
-  // Guardar mensajes en el backend
-const saveToBackend = async (newMessages) => {
-  try {
-    const token = await AsyncStorage.getItem('token');
-    if (!token) {
-      console.log('No hay token de autenticación');
-      return false;
-    }
+  const saveToBackend = async (newMessages) => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        console.log('No hay token de autenticación');
+        return false;
+      }
 
-    // Preparar los mensajes en el formato exacto que espera el backend
-    const mensajesParaBackend = newMessages.map(msg => ({
-      rol: msg.sender, // 'user' o 'bot'
-      texto: msg.text
-    }));
+      const mensajesParaBackend = newMessages.map(msg => ({
+        rol: msg.sender,
+        texto: msg.text,
+        emotion: msg.emotion || 'neutral'
+      }));
 
-    const query = `
-      mutation GuardarMensaje($input: ChatbotMovilInput!, $conversationId: ID) {
-        guardarMensajesChat(input: $input, conversationId: $conversationId) {
-          id
-          mensaje {
-            rol
-            texto
+      const query = `
+        mutation GuardarMensaje($input: ChatbotMovilInput!, $conversationId: ID) {
+          guardarMensajesChat(input: $input, conversationId: $conversationId) {
+            id
+            mensaje {
+              rol
+              texto
+              emotion
+            }
           }
         }
+      `;
+
+      const variables = {
+        input: {
+          mensaje: mensajesParaBackend
+        },
+        conversationId: isNewConversation ? null : currentConversationId
+      };
+
+      const response = await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          query,
+          variables
+        })
+      });
+
+      const responseData = await response.json();
+
+      if (responseData.errors) {
+        console.error('Errores GraphQL:', responseData.errors);
+        return false;
       }
-    `;
 
-    const variables = {
-      input: {
-        mensaje: mensajesParaBackend
-      },
-      conversationId: isNewConversation ? null : currentConversationId
-    };
+      if (responseData.data?.guardarMensajesChat?.id) {
+        if (isNewConversation) {
+          setCurrentConversationId(responseData.data.guardarMensajesChat.id);
+        }
+        return true;
+      }
 
-    console.log('Enviando a GraphQL:', { query, variables }); // Debug
-
-    const response = await fetch(BACKEND_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        query,
-        variables
-      })
-    });
-
-    const responseData = await response.json();
-    console.log('Respuesta del backend:', responseData); // Debug
-
-    if (responseData.errors) {
-      console.error('Errores GraphQL:', responseData.errors);
+      return false;
+    } catch (error) {
+      console.error('Error en saveToBackend:', error);
       return false;
     }
+  };
 
-    if (responseData.data?.guardarMensajesChat?.id) {
-      if (isNewConversation) {
-        setCurrentConversationId(responseData.data.guardarMensajesChat.id);
-      }
-      return true;
-    }
-
-    return false;
-  } catch (error) {
-    console.error('Error en saveToBackend:', error);
-    return false;
-  }
-};
-
-  // Formatear hora
   const formatTime = (timestamp) => 
     new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  // Efecto para auto-scroll
   useEffect(() => {
     if (messages.length > 0 && flatListRef.current) {
       setTimeout(() => {
@@ -280,10 +247,7 @@ const saveToBackend = async (newMessages) => {
       <View style={styles.oval2} />
       <View style={styles.oval3} />
       
-      {/* Cabecera del chat */}
       <View style={styles.header}>
-
-        
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerTitle}>Take a Brake</Text>
           <View style={styles.headerStatus}>
@@ -300,7 +264,6 @@ const saveToBackend = async (newMessages) => {
         </TouchableOpacity>
       </View>
 
-      {/* Lista de mensajes */}
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -315,6 +278,11 @@ const saveToBackend = async (newMessages) => {
               styles.messageContainer, 
               item.sender === 'user' ? styles.userMessage : styles.botMessage
             ]}>
+              {item.emotion && item.sender === 'user' && (
+                <Text style={styles.emotionText}>
+                  Emoción detectada: {item.emotion}
+                </Text>
+              )}
               <Text style={[
                 styles.messageText, 
                 item.sender === 'user' ? styles.userMessageText : styles.botMessageText
@@ -334,7 +302,6 @@ const saveToBackend = async (newMessages) => {
           keyboardDismissMode="on-drag"
         />
 
-        {/* Área de entrada de texto */}
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
@@ -365,7 +332,6 @@ const saveToBackend = async (newMessages) => {
         </View>
       </KeyboardAvoidingView>
 
-      {/* Modal de conversaciones */}
       <Modal
         animationType="slide"
         transparent={false}
@@ -519,6 +485,13 @@ const styles = StyleSheet.create({
   userMessageTime: {
     color: 'rgba(255,255,255,0.7)',
   },
+  emotionText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginBottom: 5,
+    color: '#fff',
+    textAlign: 'right',
+  },
   inputContainer: {
     flexDirection: 'row',
     padding: 10,
@@ -585,7 +558,6 @@ const styles = StyleSheet.create({
     zIndex: 0,
     opacity: 0.3,
   },
-  // Estilos para el modal
   modalContainer: {
     flex: 1,
     backgroundColor: '#fff',
