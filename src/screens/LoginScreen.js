@@ -75,10 +75,8 @@ const LoginScreen = ({ navigation }) => {
           style={[theme.logo, styles.logo]} 
         />
         <Text style={styles.title}>Take a Break</Text>
-        <Text style={styles.header}>Iniciar Sesión</Text>
 
         <View style={styles.formContainer}>
-          <Text style={styles.title}>Take a Break</Text>
           <Text style={styles.header}>Iniciar Sesión</Text>
           <Input
             label="Correo electrónico"
@@ -166,6 +164,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: colors.primary,
     fontWeight: 'bold',
+    color: 'white',
   },
   title: {
     alignItems: 'center',
@@ -176,7 +175,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   formContainer: {
-    backgroundColor: '#B42BC0',
+    backgroundColor: '#64a6e3',
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,

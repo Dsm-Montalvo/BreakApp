@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useQuery, gql } from '@apollo/client';
-import { DrawerItemList } from '@react-navigation/drawer';
+import { DrawerItemList, DrawerItem } from '@react-navigation/drawer';
 
 const OBTENER_CHATS = gql`
   query obtenerChatPorUsuario {
@@ -143,6 +143,29 @@ const CustomDrawerContent = (props) => {
           )}
         </View>
       )}
+
+      {/* Línea divisoria */}
+      <View style={styles.divider} />
+
+      {/* Botón salir en la parte inferior */}
+      <View style={styles.bottomSection}>
+        <DrawerItem
+          label="Salir"
+          labelStyle={styles.logoutLabel}
+          icon={({ color, size }) => (
+            <Icon name="exit-to-app" size={size} color={color} />
+          )}
+          onPress={() => {
+            // Aquí puedes limpiar datos de sesión si tienes AsyncStorage o contexto global
+            // Ejemplo: AsyncStorage.removeItem('userToken');
+
+            props.navigation.reset({
+              index: 0,
+              routes: [{ name: 'Home' }], // Vuelve a Home y borra historial
+            });
+          }}
+        />
+      </View>
     </View>
   );
 };
@@ -150,7 +173,7 @@ const CustomDrawerContent = (props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#c38aea',
+    backgroundColor: '#3f8fd8',
     paddingTop: 20,
   },
   header: {
@@ -261,6 +284,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     padding: 15,
     fontStyle: 'italic',
+  },
+
+  divider: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.2)',
+    marginHorizontal: 10,
+    marginVertical: 5,
+  },
+  bottomSection: {
+    paddingBottom: 15,
+  },
+  logoutLabel: {
+    color: '#ff5252',
+    fontWeight: 'bold',
   },
 });
 

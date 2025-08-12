@@ -10,6 +10,7 @@ import SettingsScreen from '../screens/SettingsScreen';
 import ChatScreen from '../screens/ChatScreen';
 import ChatHistorialScreen from '../screens/ChatHistorialScreen';
 import CustomDrawerContent from '../components/CustomDrawerContent';
+import HomeScreen from '../screens/HomeScreen';
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -20,14 +21,14 @@ export const MainApp = () => {
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         drawerStyle: {
-          backgroundColor: '#c38aea',
+          backgroundColor: '#3f8fd8',
           width: 280,
         },
         drawerActiveTintColor: '#fff',
         drawerInactiveTintColor: '#fff',
         drawerActiveBackgroundColor: 'rgba(255, 255, 255, 0.1)',
         headerStyle: {
-          backgroundColor: '#c38aea',
+          backgroundColor: '#3f8fd8',
         },
         headerTintColor: '#fff',
       }}
@@ -61,6 +62,7 @@ export const MainApp = () => {
           drawerIcon: ({ color }) => <Icon name="chat" size={22} color={color} />,
         }}
       />
+     
       
     </Drawer.Navigator>
   );

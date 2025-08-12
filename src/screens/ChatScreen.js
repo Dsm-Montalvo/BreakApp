@@ -393,8 +393,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    backgroundColor: '#c38aea',
-    padding: 15,
+    backgroundColor: '#63adf1ff',
+    padding: 5,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

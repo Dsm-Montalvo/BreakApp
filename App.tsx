@@ -28,14 +28,14 @@ const App = () => {
       <Stack.Navigator 
         initialRouteName="Home"
         screenOptions={{
-          cardStyle: { backgroundColor: '#c38aea' },
+          cardStyle: { backgroundColor: '#8fbfed' },
           cardStyleInterpolator: ({ current }) => ({
             cardStyle: {
               opacity: current.progress,
             },
           }),
           headerStyle: {
-            backgroundColor: '#c38aea',
+            backgroundColor: '#8fbfed',
           },
           headerTintColor: '#fff',
           headerTitleStyle: {

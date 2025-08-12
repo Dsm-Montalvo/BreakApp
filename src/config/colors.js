@@ -1,7 +1,7 @@
 export const colors = {
   primary: '#1a90f0ff',
   secondary: '#1d28eaff',
-  background: '#69015A',
+  background: '#b8d1e7',
   text: '#333333',
   white: '#ffffff',
   black: '#000000',
@@ -10,8 +10,8 @@ export const colors = {
   darkGray: '#7f8c8d',
   error: '#e74c3c',
   tittle: '#6FA0E4',
-  subtittle: '#A3A1A7',
-  subbox: '#B42BC0',
+  subtittle: '#ffffffff',
+  subbox: '#64a6e3',
 };
 
 export const theme = {

@@ -226,7 +226,7 @@ const ChatHistorialScreen = ({ route, navigation, messages, setMessages, current
           value={inputText}
           onChangeText={setInputText}
           placeholder="Escribe tu mensaje..."
-          placeholderTextColor="#999"
+          placeholderTextColor="#63adf1ff"
           multiline
           onSubmitEditing={sendMessage}
           returnKeyType="send"
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   },
   userMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: '#c38aea',
+    backgroundColor: '#1a90f0ff',
     borderBottomRightRadius: 0,
     elevation: 2,
   },
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     maxHeight: 100,
   },
   sendButton: {
-    backgroundColor: '#c38aea',
+    backgroundColor: '#1a90f0ff',
     borderRadius: 25,
     width: 50,
     height: 50,

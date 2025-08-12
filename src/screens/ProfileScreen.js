@@ -72,13 +72,12 @@ const ProfileScreen = () => {
 
       <Text style={styles.title}>Perfil</Text>
 
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>A</Text>
-      </View>
       <View>
         {data.obtenerUsuarios.map(usuarios =>(
           <View key={usuarios.id} style={styles.formGroup}>
-    
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{usuarios.nombre}</Text>
+            </View>
             <Text style={styles.label}>Nombre</Text>
             <TextInput style={styles.input} >{usuarios.nombre}</TextInput>
         
@@ -124,7 +123,7 @@ const styles = StyleSheet.create({
    loadingContainer: {
     flex: 1,
     justifyContent: 'center',
-    backgroundColor: '#69015A',
+    backgroundColor: '#b8d1e7',
     alignItems: 'center',
   },
   title: {
@@ -147,7 +146,7 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 24,
-    color: '#4a0072',
+    color: '#000000ff',
   },
   formGroup: {
     marginBottom: 15,
