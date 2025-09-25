@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const httpLink = createHttpLink({
           uri: Platform.OS === 'ios' ? 'http://localhost:3001/takeabrakemovil/graphql' : 'http://10.0.2.2:3001/takeabrakemovil/graphql',
-        // uri:'https://takeback.onrender.com/takeabrakemovil/graphql'
+         //uri:'https://takeback.onrender.com/takeabrakemovil/graphql'
 });
 
 const authLink = setContext(async (_, { headers }) => {

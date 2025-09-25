@@ -11,6 +11,7 @@ import ChatScreen from '../screens/ChatScreen';
 import ChatHistorialScreen from '../screens/ChatHistorialScreen';
 import CustomDrawerContent from '../components/CustomDrawerContent';
 import HomeScreen from '../screens/HomeScreen';
+import GenerosScreen from '../screens/Preferencias/GenerosScreen';
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -43,6 +44,14 @@ export const MainApp = () => {
       <Drawer.Screen 
         name="Perfil" 
         component={ProfileScreen} 
+        options={{
+          drawerIcon: ({ color }) => <Icon name="person" size={22} color={color} />,
+        }}
+      />
+
+      <Drawer.Screen 
+        name="Generos" 
+        component={GenerosScreen} 
         options={{
           drawerIcon: ({ color }) => <Icon name="person" size={22} color={color} />,
         }}

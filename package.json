@@ -21,6 +21,7 @@
     "apollo-link-context": "^1.0.20",
     "apollo-link-http": "^1.5.17",
     "axios": "^1.10.0",
+    "base-64": "^1.0.0",
     "graphql": "^15.10.1",
     "react": "19.1.0",
     "react-native": "0.80.0",
