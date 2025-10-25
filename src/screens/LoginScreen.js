@@ -43,16 +43,22 @@ const LoginScreen = ({ navigation }) => {
       const token = data?.autenticarUsuarios?.token;
       const usuario = data?.autenticarUsuarios?.usuario;
       
-      if (token) {
-        // Guardar token y datos del usuario
-        await AsyncStorage.setItem('token', token);
-        if (usuario) {
-          await AsyncStorage.setItem('usuarioId', usuario.id);
-          await AsyncStorage.setItem('usuarioEmail', usuario.email);
-          await AsyncStorage.setItem('usuarioNombre', usuario.nombre);
-        }
-        navigation.replace('MainApp');
-      } else {
+if (token) {
+  await AsyncStorage.setItem('token', token);
+  if (usuario) {
+    await AsyncStorage.setItem('usuarioId', usuario.id);
+    await AsyncStorage.setItem('usuarioEmail', usuario.email);
+    await AsyncStorage.setItem('usuarioNombre', usuario.nombre);
+  }
+
+  const preferencias = await AsyncStorage.getItem('preferenciasGuardadas');
+  if (preferencias === 'true') {
+    navigation.replace('MainApp');
+  } else {
+    navigation.replace('Generos');
+  }
+}
+ else {
         Alert.alert('Error', 'No se recibió un token válido');
       }
     } catch (error) {

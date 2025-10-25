@@ -1,18 +1,19 @@
-// GenerosScreen.jsx
+// src/screens/Preferencias/GenerosScreen.js
 import React, { useMemo, useState } from 'react';
-import { 
+import {
   SafeAreaView,
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  ActivityIndicator, 
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
   TouchableOpacity,
   ImageBackground,
   Alert,
 } from 'react-native';
 import { colors } from '../../config/colors';
 import { gql, useMutation, useQuery } from '@apollo/client';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LISTAR_SPOTIFY_GENEROS = gql`
   query listarSpotifyGeneros($limit: Int, $locale: String) {
@@ -39,18 +40,17 @@ const GenerosScreen = ({ navigation }) => {
   const [selectedGenres, setSelectedGenres] = useState([]);
 
   const { data, loading, error, refetch } = useQuery(LISTAR_SPOTIFY_GENEROS, {
-    variables: { limit: 40, locale: undefined }, // si quieres 'es_MX' ponlo aquí
+    variables: { limit: 40, locale: undefined },
     fetchPolicy: 'cache-first',
   });
 
   const [actualizarPreferencias, { loading: mutationLoading }] = useMutation(ACTUALIZAR_PREFERENCIAS);
-
   const genres = useMemo(() => (data?.listarSpotifyGeneros ?? []), [data]);
 
   const handleSelectGenre = (genreId) => {
-    setSelectedGenres(prev => (
-      prev.includes(genreId) ? prev.filter(id => id !== genreId) : [...prev, genreId]
-    ));
+    setSelectedGenres((prev) =>
+      prev.includes(genreId) ? prev.filter((id) => id !== genreId) : [...prev, genreId]
+    );
   };
 
   const handleSaveGenres = async () => {
@@ -58,10 +58,15 @@ const GenerosScreen = ({ navigation }) => {
       Alert.alert('Atención', 'Por favor, selecciona al menos un género.');
       return;
     }
+
     try {
       await actualizarPreferencias({ variables: { input: { generos: selectedGenres } } });
+
+      // Guardar bandera en AsyncStorage
+      await AsyncStorage.setItem('preferenciasGuardadas', 'true');
+
       Alert.alert('Éxito', '¡Tus géneros preferidos han sido guardados!');
-      // navigation.goBack(); // si quieres regresar
+      navigation.replace('MainApp');
     } catch (e) {
       console.error('Error al guardar los géneros:', e.message);
       Alert.alert('Error', 'No se pudieron guardar tus preferencias. Inténtalo de nuevo.');
@@ -90,12 +95,12 @@ const GenerosScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View className="absolute" style={styles.oval1} />
-      <View className="absolute" style={styles.oval2} />
-      <View className="absolute" style={styles.oval3} />
+      <View style={styles.oval1} />
+      <View style={styles.oval2} />
+      <View style={styles.oval3} />
 
       <Text style={styles.title}>Selecciona tus Géneros</Text>
-      
+
       <FlatList
         data={genres}
         numColumns={2}
@@ -104,7 +109,7 @@ const GenerosScreen = ({ navigation }) => {
         renderItem={({ item }) => {
           const isSelected = selectedGenres.includes(item.id);
           return (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.cardContainer, isSelected && styles.cardSelected]}
               onPress={() => handleSelectGenre(item.id)}
               activeOpacity={0.85}
@@ -130,7 +135,7 @@ const GenerosScreen = ({ navigation }) => {
           disabled={mutationLoading || selectedGenres.length === 0}
           style={[
             styles.customButton,
-            (mutationLoading || selectedGenres.length === 0) && styles.buttonDisabled
+            (mutationLoading || selectedGenres.length === 0) && styles.buttonDisabled,
           ]}
         >
           <Text style={styles.customButtonText}>
@@ -146,7 +151,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: 16, paddingTop: 20 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   title: { fontSize: 28, fontWeight: 'bold', color: 'white', marginBottom: 20, textAlign: 'center' },
-
   cardContainer: {
     flex: 1,
     margin: 8,
@@ -161,10 +165,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  cardSelected: { borderColor: '#1DB954' }, // <- corregido (antes cardSelectedr)
-
+  cardSelected: { borderColor: '#1DB954' },
   buttonContainer: { position: 'absolute', bottom: 20, left: 20, right: 20 },
-
   customButton: {
     backgroundColor: colors.primary,
     paddingVertical: 15,
@@ -179,15 +181,55 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { backgroundColor: '#aab8c2' },
   customButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
-
   imageBackground: { flex: 1, justifyContent: 'flex-end' },
-  textOverlay: { backgroundColor: 'rgba(0, 0, 0, 0.4)', borderBottomLeftRadius: 15, borderBottomRightRadius: 15, padding: 10 },
+  textOverlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
+    padding: 10,
+  },
   cardText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
-  selectedIndicator: { position: 'absolute', top: 10, right: 10, width: 20, height: 20, borderRadius: 10, backgroundColor: '#1DB954', borderWidth: 2, borderColor: 'white' },
-
-  oval1: { position: 'absolute', width: 180, height: 180, borderRadius: 90, backgroundColor: '#78C9DC', top: -40, left: -40, zIndex: 0 },
-  oval2: { position: 'absolute', width: 150, height: 150, borderRadius: 75, backgroundColor: '#DA96BB', bottom: -30, left: -50, zIndex: 0 },
-  oval3: { position: 'absolute', width: 130, height: 130, borderRadius: 65, backgroundColor: '#4449D8', bottom: -20, right: -30, zIndex: 0 },
+  selectedIndicator: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#1DB954',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  oval1: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: '#78C9DC',
+    top: -40,
+    left: -40,
+    zIndex: 0,
+  },
+  oval2: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: '#DA96BB',
+    bottom: -30,
+    left: -50,
+    zIndex: 0,
+  },
+  oval3: {
+    position: 'absolute',
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: '#4449D8',
+    bottom: -20,
+    right: -30,
+    zIndex: 0,
+  },
 });
 
 export default GenerosScreen;

@@ -15,6 +15,8 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import CustomDrawerContent from './src/components/CustomDrawerContent';
 import { MainApp } from './src/components/MainApp';
+import GenerosScreen from './src/screens/Preferencias/GenerosScreen';
+
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -63,6 +65,12 @@ const App = () => {
           component={MainApp} 
           options={{ headerShown: false }} 
         />
+        <Stack.Screen 
+  name="Generos" 
+  component={GenerosScreen} 
+  options={{ title: 'Preferencias' }} 
+/>
+
       </Stack.Navigator>
     </NavigationContainer>
   );
