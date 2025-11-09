@@ -67,7 +67,7 @@ export const MainApp = () => {
       <Drawer.Screen 
         name="Chat" 
         component={ChatScreenWrapper}
-        options={{
+        options={{ drawerItemStyle: { display: 'none' },
           drawerIcon: ({ color }) => <Icon name="chat" size={22} color={color} />,
         }}
       />
