@@ -2,7 +2,7 @@ export const colors = {
   primary: '#1a90f0ff',
   secondary: '#1d28eaff',
   //background: '#69015A',
-  background: '#b8d1e7',
+  //background: '#b8d1e7',
   text: '#333333',
   white: '#ffffff',
   black: '#000000',
@@ -13,7 +13,33 @@ export const colors = {
   tittle: '#6FA0E4',
   subtittle: '#ffffffff',
   subbox: '#64a6e3',
+  gradientStart: '#4facfe', // Cian/Azul claro
+  gradientEnd: '#8e44ad',   // Violeta
+  glassBorder: 'rgba(255, 255, 255, 0.3)',
+  white: '#ffffff',
+  background: '#6A5ACD', 
   
+  // Colores para los óvalos (simulan el degradado)
+  ovalCyan: '#00BFFF',   // Azul claro (esquina superior)
+  ovalPurple: '#9370DB', // Morado (esquina inferior)
+  ovalPink: '#FF69B4',   // Un toque rosa sutil
+
+  // Efecto Vidrio (Blanco con transparencia)
+  glassBackground: 'rgba(255, 255, 255, 0.15)', 
+  glassBorder: 'rgba(255, 255, 255, 0.3)',
+
+  // Textos
+  text: '#FFFFFF',      // Texto blanco para fondo oscuro
+  textDark: '#483D8B',  // Texto oscuro para botón blanco
+
+  // Botones
+  primary: '#FFFFFF',   // Botón blanco
+  secondary: 'transparent', // Botón transparente
+  
+  // Colores auxiliares
+  white: '#ffffff',
+  black: '#000000',
+  error: '#e74c3c',
 };
 
 export const theme = {
@@ -77,5 +103,11 @@ export const theme = {
     bottom: 150,
     left: -20,
     zIndex: -1,
+  },
+  logo: {
+    width: 150,
+    height: 150,
+    resizeMode: 'contain',
+    alignSelf: 'center',
   },
 };

@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform, Image, Dimensions } from 'react-native';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
-import { theme, colors } from '../config/colors';
+import { theme } from '../config/colors';
 import { gql, useMutation } from '@apollo/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Librerías nativas
+import LinearGradient from 'react-native-linear-gradient';
+import { BlurView } from '@react-native-community/blur';
 
 const LOGIN_USER = gql`
   mutation AutenticarUsuarios($input: AutenticarInput!) {
@@ -41,32 +45,28 @@ const LoginScreen = ({ navigation }) => {
     try {
       const { data } = await loginUser({
         variables: {
-          input: {
-            email,
-            password
-          }
+          input: { email, password }
         }
       });
 
       const token = data?.autenticarUsuarios?.token;
       const usuario = data?.autenticarUsuarios?.usuario;
       
-if (token) {
-  await AsyncStorage.setItem('token', token);
-  if (usuario) {
-    await AsyncStorage.setItem('usuarioId', usuario.id);
-    await AsyncStorage.setItem('usuarioEmail', usuario.email);
-    await AsyncStorage.setItem('usuarioNombre', usuario.nombre);
-  }
+      if (token) {
+        await AsyncStorage.setItem('token', token);
+        if (usuario) {
+          await AsyncStorage.setItem('usuarioId', usuario.id);
+          await AsyncStorage.setItem('usuarioEmail', usuario.email);
+          await AsyncStorage.setItem('usuarioNombre', usuario.nombre);
+        }
 
-  const preferencias = await AsyncStorage.getItem('preferenciasGuardadas');
-  if (preferencias === 'true') {
-    navigation.replace('MainApp');
-  } else {
-    navigation.replace('Generos');
-  }
-}
- else {
+        const preferencias = await AsyncStorage.getItem('preferenciasGuardadas');
+        if (preferencias === 'true') {
+          navigation.replace('MainApp');
+        } else {
+          navigation.replace('Generos');
+        }
+      } else {
         Alert.alert('Error', 'No se recibió un token válido');
       }
     } catch (error) {
@@ -75,177 +75,211 @@ if (token) {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <LinearGradient
+      colors={['#4facfe', '#8e44ad']} 
       style={styles.container}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
     >
-      <View style={styles.oval1} />
-      <View style={styles.oval2} />
-      <View style={styles.oval3} />
-
-      <View style={styles.content}>
-        <Image 
-          source={require('../assets/images/logo2.png')} 
-          style={[theme.logo, styles.logo]} 
-        />
-        <Text style={styles.title}>Take a Break</Text>
-        
-       {/* ************************              *****************************   */}  
-        <View style={[
-          styles.formContainer,
-          dimensions.width > 500 && { padding: 40, maxWidth: 500 }
-        ]}>
-          <Text style={styles.header}>Iniciar Sesión</Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+      >
+        <View style={styles.content}>
+          <Image 
+            source={require('../assets/images/logo2.png')} 
+            style={[theme.logo, styles.logo]} 
+          />
+          <Text style={styles.title}>Take a Break</Text>
           
-          <Input
-            label="Correo electrónico"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Ingresa tu correo"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            containerStyle={styles.inputContainer}
-            inputStyle={styles.inputText}
-            placeholderTextColor="#000000"
-            labelStyle={styles.labelStyle}
-          />
-
-          <Input
-            label="Contraseña"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Ingresa tu contraseña"
-            secureTextEntry
-            containerStyle={styles.inputContainer}
-            inputStyle={styles.inputText}
-            placeholderTextColor="#777"
-            labelStyle={styles.labelStyle}
-            autoCapitalize="none"
-            returnKeyType="done"
-          />
-
-          <View style={styles.buttonGroup}>
-            <Button
-              title={loading ? "Cargando..." : "Iniciar Sesión"}
-              onPress={handleLogin}
-              disabled={loading}
-              style={[styles.button, { backgroundColor: colors.primary }]}
-              textStyle={styles.buttonText}
+          {/* Tarjeta de Vidrio (Estilo Sutil) */}
+          <View style={[
+            styles.glassContainer,
+            dimensions.width > 500 && { maxWidth: 500 }
+          ]}>
+            
+            {/* Fondo borroso reducido para evitar brillo excesivo */}
+            <BlurView
+              style={styles.absoluteBlur}
+              blurType="light"
+              blurAmount={6} 
+              reducedTransparencyFallbackColor="white"
             />
 
-            <Button
-              title="Regresar"
-              onPress={() => navigation.goBack()}
-              style={[styles.button, { backgroundColor: colors.secondary }]}
-              textStyle={styles.buttonText}
-            />
+            <View style={styles.formContent}>
+              <Text style={styles.header}>Iniciar Sesión</Text>
+              
+              <Input
+                label="Correo electrónico"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Ingresa tu correo"
+                placeholderTextColor="#A0A0A0"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                // Estilos actualizados tipo cápsula
+                containerStyle={styles.inputWrapper}
+                inputStyle={styles.inputField}
+                labelStyle={styles.labelStyle}
+              />
+
+              <Input
+                label="Contraseña"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Ingresa tu contraseña"
+                placeholderTextColor="#A0A0A0"
+                secureTextEntry
+                // Estilos actualizados tipo cápsula
+                containerStyle={styles.inputWrapper}
+                inputStyle={styles.inputField}
+                labelStyle={styles.labelStyle}
+                autoCapitalize="none"
+              />
+
+              <View style={styles.buttonGroup}>
+                <Button
+                  title={loading ? "Cargando..." : "Iniciar Sesión"}
+                  onPress={handleLogin}
+                  disabled={loading}
+                  style={styles.btnPrimary}
+                  textStyle={styles.btnPrimaryText}
+                />
+
+                <Button
+                  title="Regresar"
+                  onPress={() => navigation.goBack()}
+                  style={styles.btnSecondary}
+                  textStyle={styles.btnSecondaryText}
+                />
+              </View>
+            </View>
           </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-    justifyContent: 'center',
-    position: 'relative',
-    overflow: 'hidden',
   },
-  oval1: {
-    position: 'absolute',
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: '#78C9DC',
-    top: -40,
-    left: -40,
-    zIndex: 0,
-  },
-  oval2: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: '#DA96BB',
-    bottom: -30,
-    left: -50,
-    zIndex: 0,
-  },
-  oval3: {
-    position: 'absolute',
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    backgroundColor: '#4449D8',
-    bottom: -20,
-    right: -30,
-    zIndex: 0,
+  keyboardView: {
+    flex: 1,
   },
   content: {
     padding: 20,
-    zIndex: 1,
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  header: {
-    fontSize: 24,
+  logo: {
     marginBottom: 20,
-    textAlign: 'center',
-    color: 'white',
-    fontWeight: 'bold',
-    color: 'white',
+    width: 120,
+    height: 120,
   },
   title: {
     fontSize: 40,
-    color: colors.tittle,
+    color: '#FFFFFF',
     textAlign: 'center',
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 30,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: {width: -1, height: 1},
+    textShadowRadius: 10,
   },
-  formContainer: {
-    backgroundColor: '#64a6e3',
-    borderRadius: 12,
-    padding: 20,
+  
+  // --- Tarjeta Glassmorphism (Igual que Registro) ---
+  glassContainer: {
+    width: '100%',
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)', // Borde sutil
+    position: 'relative',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Fondo muy transparente
+  },
+  absoluteBlur: {
+    position: 'absolute',
+    top: 0, left: 0, bottom: 0, right: 0,
+  },
+  formContent: {
+    padding: 25,
+  },
+  header: {
+    fontSize: 24,
+    marginBottom: 25,
+    textAlign: 'center',
+    color: 'white',
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0,0,0,0.2)',
+    textShadowRadius: 5,
+  },
+
+  // --- INPUTS (Estilo Cápsula Limpia) ---
+  inputWrapper: {
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    width: '90%',
-    alignSelf: 'center',
-  },
-  inputContainer: {
-    backgroundColor: colors.subbox,
-    borderRadius: 8,
-    marginBottom: 15,
-    paddingHorizontal: 10,
-  },
-  inputText: {
-    color: 'black',
-    fontSize: 16,
+    backgroundColor: 'transparent',
+    borderWidth: 0, 
   },
   labelStyle: {
-    color: 'black',
-    marginBottom: 5,
+    color: '#FFFFFF', 
+    fontSize: 14,
     fontWeight: '600',
+    marginBottom: 8,
+    marginLeft: 4,
+    textShadowColor: 'rgba(0,0,0,0.1)',
+    textShadowRadius: 2,
   },
-  buttonGroup: {
-    width: '100%',
-  },
-  button: {
-    marginVertical: 10,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: 'white',
+  inputField: {
+    backgroundColor: '#FFFFFF', // Blanco sólido
+    borderRadius: 12,
+    color: '#333333', // Texto negro
     fontSize: 16,
+    paddingHorizontal: 15,
+    height: 50,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+
+  // --- BOTONES ---
+  buttonGroup: {
+    marginTop: 10,
+    gap: 15,
+  },
+  btnPrimary: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    paddingVertical: 15,
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  btnPrimaryText: {
+    color: '#8e44ad',
     fontWeight: 'bold',
+    fontSize: 16,
+  },
+  btnSecondary: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 30,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  btnSecondaryText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 
