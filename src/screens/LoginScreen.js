@@ -90,7 +90,8 @@ if (token) {
           style={[theme.logo, styles.logo]} 
         />
         <Text style={styles.title}>Take a Break</Text>
-        //************************              *****************************      */
+        
+       {/* ************************              *****************************   */}  
         <View style={[
           styles.formContainer,
           dimensions.width > 500 && { padding: 40, maxWidth: 500 }
