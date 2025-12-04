@@ -13,6 +13,7 @@ export const colors = {
   tittle: '#6FA0E4',
   subtittle: '#ffffffff',
   subbox: '#64a6e3',
+  
 };
 
 export const theme = {
