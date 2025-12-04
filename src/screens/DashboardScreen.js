@@ -5,7 +5,7 @@ import { theme, colors } from '../config/colors';
 
 const DashboardScreen = ({ navigation }) => {
   const handleStartChat = () => {
-    navigation.navigate('Nuevo Chat'); 
+    navigation.navigate('Chat'); 
   };
 
   return (

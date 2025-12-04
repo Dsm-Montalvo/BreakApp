@@ -51,15 +51,22 @@ const LoginScreen = ({ navigation }) => {
       const token = data?.autenticarUsuarios?.token;
       const usuario = data?.autenticarUsuarios?.usuario;
       
-      if (token) {
-        await AsyncStorage.setItem('token', token);
-        if (usuario) {
-          await AsyncStorage.setItem('usuarioId', usuario.id);
-          await AsyncStorage.setItem('usuarioEmail', usuario.email);
-          await AsyncStorage.setItem('usuarioNombre', usuario.nombre);
-        }
-        navigation.replace('MainApp');
-      } else {
+if (token) {
+  await AsyncStorage.setItem('token', token);
+  if (usuario) {
+    await AsyncStorage.setItem('usuarioId', usuario.id);
+    await AsyncStorage.setItem('usuarioEmail', usuario.email);
+    await AsyncStorage.setItem('usuarioNombre', usuario.nombre);
+  }
+
+  const preferencias = await AsyncStorage.getItem('preferenciasGuardadas');
+  if (preferencias === 'true') {
+    navigation.replace('MainApp');
+  } else {
+    navigation.replace('Generos');
+  }
+}
+ else {
         Alert.alert('Error', 'No se recibió un token válido');
       }
     } catch (error) {
@@ -83,7 +90,7 @@ const LoginScreen = ({ navigation }) => {
           style={[theme.logo, styles.logo]} 
         />
         <Text style={styles.title}>Take a Break</Text>
-        
+        //************************              *****************************      */
         <View style={[
           styles.formContainer,
           dimensions.width > 500 && { padding: 40, maxWidth: 500 }
@@ -189,6 +196,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: 'white',
     fontWeight: 'bold',
+    color: 'white',
   },
   title: {
     fontSize: 40,
