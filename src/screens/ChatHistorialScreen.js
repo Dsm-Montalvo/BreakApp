@@ -21,8 +21,8 @@ import { useRoute } from '@react-navigation/native';
 import { colors } from '../config/colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const FLASK_API_URL = 'http://10.0.2.2:5000/chat';
-const BACKEND_URL = 'http://10.0.2.2:3001/takeabrakemovil/graphql';
+const FLASK_API_URL = 'https://app-ia-micro-central.purplebeach-c6e8a51b.centralus.azurecontainerapps.io/chat';
+const BACKEND_URL = 'https://node-graphql-app.purplebeach-c6e8a51b.centralus.azurecontainerapps.io/takeabrakemovil/graphql';
 
 const ChatHistorialScreen = () => {
   const [messages, setMessages] = useState([]);
